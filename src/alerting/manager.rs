@@ -2,13 +2,13 @@ use crate::SecurityAlert;
 use super::console::ConsoleAlerter;
 use super::email::EmailAlerter;
 use super::webhook::WebhookAlerter;
-use anyhow::{Result, Context};
+use anyhow::Result;
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::sync::Arc;
 use tokio::sync::{RwLock, mpsc};
-use tokio::time::{Duration, Interval, interval};
+use tokio::time::{Duration, interval};
 use uuid::Uuid;
 
 /// Manager principal que coordina todos los alertadores
@@ -727,7 +727,7 @@ impl AlertManager {
     /// Procesa un batch específico
     async fn process_batch_internal(&self, batch_id: &str) {
         let batch = {
-            let mut batch_queue = self.batch_queue.write().await;
+            let batch_queue = self.batch_queue.write().await;
             batch_queue.values()
                 .find(|b| b.id == batch_id)
                 .cloned()

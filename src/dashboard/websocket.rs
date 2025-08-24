@@ -1,5 +1,4 @@
 ﻿use crate::{storage::StorageManager, detector::DetectorEngine, LogEvent, SecurityAlert};
-use anyhow::Result;
 use futures_util::{SinkExt, StreamExt};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;

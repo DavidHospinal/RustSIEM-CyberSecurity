@@ -1,8 +1,5 @@
 ﻿use anyhow::{Result, Context};
 use smartcore::linalg::basic::matrix::DenseMatrix;
-use smartcore::cluster::kmeans::KMeans;
-use smartcore::linalg::basic::arrays::Array;
-use smartcore::linalg::basic::arrays::Array2;
 use serde::{Deserialize, Serialize};
 use std::collections::{HashMap, VecDeque};
 use chrono::{DateTime, Utc, Duration, Timelike, Datelike};

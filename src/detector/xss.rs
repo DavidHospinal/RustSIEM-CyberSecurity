@@ -5,9 +5,6 @@ use once_cell::sync::Lazy;
 use serde::{Deserialize, Serialize};
 
 // Removed unused imports
-use chrono::{DateTime, Utc};
-use uuid::Uuid;
-use serde_json;
 use urlencoding;
 use html_escape;
 /// Detector especializado en Cross-Site Scripting (XSS)

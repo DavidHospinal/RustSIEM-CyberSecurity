@@ -5,7 +5,6 @@ use regex::Regex;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::path::Path;
-use uuid::Uuid;
 
 /// Trait común para todos los parsers de logs
 pub trait LogParser: Send + Sync {
@@ -252,7 +251,7 @@ pub fn log_level_to_severity(level: &LogLevel) -> Severity {
 }
 
 /// Detecta el tipo de evento basado en contenido del log
-pub fn detect_event_type(line: &str, parsed_data: &HashMap<String, String>) -> EventType {
+pub fn detect_event_type(line: &str, _parsed_data: &HashMap<String, String>) -> EventType {
     let line_lower = line.to_lowercase();
 
     // Detectar SQL Injection

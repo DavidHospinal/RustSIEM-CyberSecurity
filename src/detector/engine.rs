@@ -14,7 +14,6 @@ use tokio::sync::RwLock;
 use std::time::Instant;
 use uuid::Uuid;
 use chrono::Utc;
-use serde::{Deserialize, Serialize};
 
 
 /// Calcula el puntaje de riesgo combinado de múltiples detectores
@@ -108,7 +107,7 @@ impl DetectorEngine {
 
         // Procesar con detector SQL Injection
         if config.sql_injection.enabled {
-            if let Some(parsed_data) = log_event.parsed_data.as_object() {
+            if let Some(_parsed_data) = log_event.parsed_data.as_object() {
                 let raw_input = format!("{} {}",
                                         log_event.raw_message,
                                         serde_json::to_string(&log_event.parsed_data).unwrap_or_default()
@@ -638,15 +637,15 @@ pub mod utils {
 
     /// Analiza tendencias de detección
     pub fn analyze_detection_trends(results: &[DetectionResult]) -> serde_json::Value {
-        let mut threat_counts: std::collections::HashMap<String, u32> = HashMap::new();
+        let _threat_counts: std::collections::HashMap<String, u32> = HashMap::new();
         let mut risk_scores = Vec::new();
 
         for result in results {
             if result.has_threats {
                 risk_scores.push(result.risk_score);
 
-                for indicator in &result.combined_indicators {
-
+                for _indicator in &result.combined_indicators {
+                    // Process indicators here
                 }
             }
         }
@@ -664,7 +663,7 @@ pub mod utils {
            "threats_detected": risk_scores.len(),
            "average_risk_score": avg_risk,
            "maximum_risk_score": max_risk,
-           "threat_type_counts": threat_counts
+           "threat_type_counts": _threat_counts
        })
     }
 

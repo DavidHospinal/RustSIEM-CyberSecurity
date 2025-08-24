@@ -4,7 +4,6 @@ use std::sync::Arc;
 use warp::Filter;
 use serde::{Deserialize, Serialize};
 use chrono::{DateTime, Utc};
-use std::path::PathBuf;
 
 #[derive(Clone)]
 pub struct DashboardServer {

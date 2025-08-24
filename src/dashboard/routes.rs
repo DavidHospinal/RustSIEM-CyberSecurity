@@ -1,7 +1,7 @@
 ﻿use crate::{storage::StorageManager, detector::DetectorEngine, Severity, LogEvent, SecurityAlert};
 use anyhow::Result;
 use std::sync::Arc;
-use warp::{Filter, reply::Reply};
+use warp::Filter;
 use serde::{Deserialize, Serialize};
 use chrono::{DateTime, Utc};
 use uuid::Uuid;
@@ -335,7 +335,7 @@ impl DashboardRoutes {
     /// Obtiene detalles de un evento específico
     async fn get_event_details(
         storage: Arc<StorageManager>,
-        detector: Arc<DetectorEngine>,
+        _detector: Arc<DetectorEngine>,
         event_id: String,
     ) -> Result<EventDetails> {
         let uuid = Uuid::parse_str(&event_id)?;

@@ -4,7 +4,6 @@ use regex::Regex;
 use std::collections::{HashMap, VecDeque};
 use std::sync::{Arc, RwLock};
 use serde::{Deserialize, Serialize};
-use once_cell::sync::Lazy;
 
 /// Detector especializado en ataques de fuerza bruta
 #[derive(Clone)]

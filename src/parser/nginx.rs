@@ -1,5 +1,5 @@
-﻿use crate::{LogEvent, Severity, EventType};
-use crate::parser::common::{LogParser, extract_source_ip, detect_event_type, log_level_to_severity};
+﻿use crate::{LogEvent, Severity};
+use crate::parser::common::{LogParser, extract_source_ip, detect_event_type};
 use anyhow::{Result, Context};
 use regex::Regex;
 use chrono::{DateTime, Utc, NaiveDateTime};

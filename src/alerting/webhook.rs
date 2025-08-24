@@ -1,7 +1,7 @@
 ﻿use crate::SecurityAlert;
-use anyhow::{Result, Context};
+use anyhow::Result;
 use chrono::{DateTime, Utc};
-use reqwest::{Client, Response, Url};
+use reqwest::Client;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::sync::Arc;
@@ -468,7 +468,7 @@ impl WebhookAlerter {
 
         // Verificar límite de reintentos
         let default_retry_config = RetryConfig::default();
-        let retry_config = webhook.retry_config.as_ref().unwrap_or(&default_retry_config);
+        let _retry_config = webhook.retry_config.as_ref().unwrap_or(&default_retry_config);
 
         // Verificar códigos de estado que NO deben reintentarse
         if let Some(status_code) = response.status_code {

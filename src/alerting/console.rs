@@ -1,12 +1,11 @@
-﻿use colored::*;
-use crate::SecurityAlert;
+﻿use crate::SecurityAlert;
 use anyhow::Result;
 use chrono::{DateTime, Utc};
+use colored::Colorize;
 use serde::{Deserialize, Serialize};
 use std::io::{self, Write};
 use std::sync::Arc;
 use tokio::sync::RwLock;
-use colored::*;
 
 /// Alertador que envía notificaciones a la consola
 pub struct ConsoleAlerter {

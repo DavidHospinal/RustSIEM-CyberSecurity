@@ -1,0 +1,466 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RustSIEM - Security Information & Event Management</title>
+    <link rel="stylesheet" href="/static/style.css">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🔐</text></svg>">
+</head>
+<body>
+<div class="container">
+    <!-- Header Principal -->
+    <header class="header">
+        <div class="header-content">
+            <div class="logo-section">
+                <h1 class="main-title">
+                    <span class="logo">🛡️</span>
+                    RustSIEM
+                    <span class="subtitle">Security Information & Event Management</span>
+                </h1>
+            </div>
+            <div class="header-info">
+                <div class="last-updated">
+                    <span>Last Updated:</span>
+                    <span id="last-updated-time">--</span>
+                </div>
+                <div class="critical-alerts-badge">
+                    <span id="critical-alerts-count">0</span>
+                    <span>Critical Alerts</span>
+                </div>
+            </div>
+        </div>
+
+        <nav class="nav-menu">
+            <a href="#dashboard" class="nav-link active" data-page="dashboard">
+                <span class="nav-icon">📊</span>
+                Dashboard
+            </a>
+            <a href="#events" class="nav-link" data-page="events">
+                <span class="nav-icon">📋</span>
+                Events
+            </a>
+            <a href="#alerts" class="nav-link" data-page="alerts">
+                <span class="nav-icon">⚠️</span>
+                Alerts
+            </a>
+            <a href="#threat-hunt" class="nav-link" data-page="threat-hunt">
+                <span class="nav-icon">🎯</span>
+                Threat Hunt
+            </a>
+            <a href="#reports" class="nav-link" data-page="reports">
+                <span class="nav-icon">📑</span>
+                Reports
+            </a>
+        </nav>
+    </header>
+
+    <!-- Barra de Estado del Sistema -->
+    <div class="status-bar">
+        <span class="status-indicator" id="system-status"></span>
+        <span class="status-text">System Status: <span id="system-status-text">Operational</span></span>
+        <div class="status-details">
+            <span>Events/sec: <span id="events-per-second">0</span></span>
+            <span>Active Sources: <span id="active-sources">0</span></span>
+            <span>Uptime: <span id="system-uptime">00:00:00</span></span>
+        </div>
+    </div>
+
+    <!-- Contenido Principal -->
+    <main id="main-content">
+        <!-- Dashboard Principal -->
+        <section id="dashboard-page" class="page-content active">
+            <div class="analytics-header">
+                <h2>📊 Analytics</h2>
+            </div>
+
+            <!-- Métricas Principales -->
+            <div class="metrics-grid">
+                <div class="metric-card" id="events-per-second-card">
+                    <div class="metric-header">
+                        <span class="metric-icon">⚡</span>
+                        <span class="metric-title">
+                            <div class="tooltip-container">
+                                <span class="tooltip-term">Events per Second</span>
+                                <div class="tooltip-content">
+                                    <div class="tooltip-title">Eventos por Segundo (EPS)</div>
+                                    <div class="tooltip-description">
+                                        Métrica que mide la velocidad de procesamiento de logs de seguridad. Un valor alto puede indicar un ataque en curso o problemas de rendimiento.
+                                    </div>
+                                    <div class="tooltip-examples">
+                                        <div class="tooltip-examples-title">Valores típicos:</div>
+                                        <ul class="tooltip-examples-list">
+                                            <li>1-10 EPS: Tráfico normal</li>
+                                            <li>50-100 EPS: Actividad elevada</li>
+                                            <li>500+ EPS: Posible ataque DDoS</li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                        </span>
+                    </div>
+                    <div class="metric-value" id="metric-events-per-second">0.00</div>
+                    <div class="metric-trend">
+                        <span class="trend-text">+12% from last hour</span>
+                    </div>
+                </div>
+
+                <div class="metric-card critical" id="critical-alerts-card">
+                    <div class="metric-header">
+                        <span class="metric-icon">🔴</span>
+                        <span class="metric-title">
+                            <div class="tooltip-container">
+                                <span class="tooltip-term">Critical Alerts</span>
+                                <div class="tooltip-content">
+                                    <div class="tooltip-title">Alertas Críticas</div>
+                                    <div class="tooltip-description">
+                                        Eventos de seguridad que requieren respuesta inmediata. Indican compromiso activo o intento de ataque exitoso.
+                                    </div>
+                                    <div class="tooltip-examples">
+                                        <div class="tooltip-examples-title">Ejemplos de alertas críticas:</div>
+                                        <ul class="tooltip-examples-list">
+                                            <li>Inyección SQL exitosa</li>
+                                            <li>Acceso root no autorizado</li>
+                                            <li>Exfiltración de datos masiva</li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                        </span>
+                    </div>
+                    <div class="metric-value" id="metric-critical-alerts">0</div>
+                    <div class="metric-trend">
+                        <span class="trend-text">SQL Injection detected</span>
+                    </div>
+                </div>
+
+                <div class="metric-card warning" id="threat-score-card">
+                    <div class="metric-header">
+                        <span class="metric-icon">🎯</span>
+                        <span class="metric-title">
+                            <div class="tooltip-container">
+                                <span class="tooltip-term">Threat Score</span>
+                                <div class="tooltip-content">
+                                    <div class="tooltip-title">Puntuación de Amenaza</div>
+                                    <div class="tooltip-description">
+                                        Algoritmo que combina múltiples indicadores para calcular el nivel de riesgo general del sistema. Escala 0-10.
+                                    </div>
+                                    <div class="tooltip-examples">
+                                        <div class="tooltip-examples-title">Niveles de riesgo:</div>
+                                        <ul class="tooltip-examples-list">
+                                            <li>0-3: Riesgo bajo, operación normal</li>
+                                            <li>4-6: Riesgo medio, monitoreo requerido</li>
+                                            <li>7-10: Riesgo alto, respuesta inmediata</li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                        </span>
+                    </div>
+                    <div class="metric-value" id="metric-threat-score">0.0<span class="metric-unit">/10</span></div>
+                    <div class="metric-trend">
+                        <span class="trend-text">High risk detected</span>
+                    </div>
+                </div>
+
+                <div class="metric-card" id="active-sources-card">
+                    <div class="metric-header">
+                        <span class="metric-icon">📡</span>
+                        <span class="metric-title">Active Log Sources</span>
+                    </div>
+                    <div class="metric-value" id="metric-active-sources">0</div>
+                    <div class="metric-trend">
+                        <span class="trend-text">All systems reporting</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Stream de Eventos en Tiempo Real -->
+            <div class="real-time-section">
+                <div class="section-header">
+                    <h3>📡 Real-time Event Stream</h3>
+                    <div class="controls">
+                        <button class="control-btn" id="pause-stream">
+                            <span class="btn-icon">⏸️</span>
+                            Pause
+                        </button>
+                        <button class="control-btn" id="clear-stream">
+                            <span class="btn-icon">🗑️</span>
+                            Clear
+                        </button>
+                    </div>
+                </div>
+                <div class="event-stream" id="event-stream">
+                    <div class="stream-placeholder">
+                        <span class="placeholder-icon">📡</span>
+                        <span>Waiting for events...</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Patrones de Ataques -->
+            <div class="attack-patterns-section">
+                <div class="section-header">
+                    <h3>🛡️ Attack Patterns (Last 24h)</h3>
+                </div>
+                <div class="attack-patterns-grid">
+                    <div class="pattern-card">
+                        <div class="pattern-header">
+                            <span class="pattern-icon">💉</span>
+                            <span class="pattern-name">
+                                <div class="tooltip-container">
+                                    <span class="tooltip-term">SQL Injection</span>
+                                    <div class="tooltip-content">
+                                        <div class="tooltip-title">Inyección SQL</div>
+                                        <div class="tooltip-description">
+                                            Técnica donde atacantes insertan código SQL malicioso en campos de entrada para manipular bases de datos.
+                                        </div>
+                                        <div class="tooltip-examples">
+                                            <div class="tooltip-examples-title">Payloads comunes:</div>
+                                            <ul class="tooltip-examples-list">
+                                                <li>' OR '1'='1'--</li>
+                                                <li>'; DROP TABLE users;--</li>
+                                                <li>' UNION SELECT password FROM admin--</li>
+                                            </ul>
+                                        </div>
+                                    </div>
+                                </div>
+                            </span>
+                        </div>
+                        <div class="pattern-count" id="sql-injection-count">0</div>
+                        <div class="pattern-bar">
+                            <div class="pattern-progress" id="sql-injection-progress"></div>
+                        </div>
+                    </div>
+
+                    <div class="pattern-card">
+                        <div class="pattern-header">
+                            <span class="pattern-icon">🔗</span>
+                            <span class="pattern-name">
+                                <div class="tooltip-container">
+                                    <span class="tooltip-term">XSS</span>
+                                    <div class="tooltip-content">
+                                        <div class="tooltip-title">Cross-Site Scripting (XSS)</div>
+                                        <div class="tooltip-description">
+                                            Ataque que inyecta scripts maliciosos en sitios web para robar información de usuarios o ejecutar acciones no autorizadas.
+                                        </div>
+                                        <div class="tooltip-examples">
+                                            <div class="tooltip-examples-title">Tipos de XSS:</div>
+                                            <ul class="tooltip-examples-list">
+                                                <li>Reflejado: Script en URL o formulario</li>
+                                                <li>Almacenado: Script guardado en DB</li>
+                                                <li>DOM: Manipulación del DOM local</li>
+                                            </ul>
+                                        </div>
+                                    </div>
+                                </div>
+                            </span>
+                        </div>
+                        <div class="pattern-count" id="xss-count">0</div>
+                        <div class="pattern-bar">
+                            <div class="pattern-progress" id="xss-progress"></div>
+                        </div>
+                    </div>
+
+                    <div class="pattern-card">
+                        <div class="pattern-header">
+                            <span class="pattern-icon">🔨</span>
+                            <span class="pattern-name">
+                                <div class="tooltip-container">
+                                    <span class="tooltip-term">Brute Force</span>
+                                    <div class="tooltip-content">
+                                        <div class="tooltip-title">Ataque de Fuerza Bruta</div>
+                                        <div class="tooltip-description">
+                                            Método sistemático que prueba múltiples combinaciones de credenciales hasta encontrar las correctas.
+                                        </div>
+                                        <div class="tooltip-examples">
+                                            <div class="tooltip-examples-title">Objetivos comunes:</div>
+                                            <ul class="tooltip-examples-list">
+                                                <li>SSH: Acceso remoto a servidores</li>
+                                                <li>RDP: Escritorio remoto Windows</li>
+                                                <li>FTP: Transferencia de archivos</li>
+                                                <li>Login web: Paneles de administración</li>
+                                            </ul>
+                                        </div>
+                                    </div>
+                                </div>
+                            </span>
+                        </div>
+                        <div class="pattern-count" id="brute-force-count">0</div>
+                        <div class="pattern-bar">
+                            <div class="pattern-progress" id="brute-force-progress"></div>
+                        </div>
+                    </div>
+
+                    <div class="pattern-card">
+                        <div class="pattern-header">
+                            <span class="pattern-icon">📈</span>
+                            <span class="pattern-name">DDoS</span>
+                        </div>
+                        <div class="pattern-count" id="ddos-count">0</div>
+                        <div class="pattern-bar">
+                            <div class="pattern-progress" id="ddos-progress"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Amenazas Geográficas -->
+            <div class="geographic-threats">
+                <div class="section-header">
+                    <h3>🌍 Geographic Threats</h3>
+                </div>
+                <div class="threats-list" id="geographic-threats-list">
+                    <!-- Se llena dinámicamente -->
+                </div>
+            </div>
+
+            <!-- Machine Learning Anomalies -->
+            <div class="ml-anomalies-section">
+                <div class="section-header">
+                    <h3>🧠 ML Anomaly Detection</h3>
+                </div>
+                <div class="ml-status">
+                    <div class="ml-model-status">
+                        <span class="model-label">Model Status:</span>
+                        <span class="model-status" id="ml-model-status">TRAINING</span>
+                        <div class="training-progress">
+                            <span class="progress-text">Training on 24h of normal traffic patterns...</span>
+                            <div class="progress-bar">
+                                <div class="progress-fill" id="ml-training-progress"></div>
+                            </div>
+                            <span class="progress-percent" id="ml-training-percent">80%</span>
+                        </div>
+                    </div>
+                    <div class="anomalies-detected">
+                        <h4>Anomalies Detected (Last Hour)</h4>
+                        <div class="anomaly-list" id="anomaly-list">
+                            <!-- Se llena dinámicamente -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Estado de Reglas de Detección -->
+            <div class="detection-rules-section">
+                <div class="section-header">
+                    <h3>⚙️ Detection Rules Status</h3>
+                    <button class="control-btn" id="add-rule-btn">
+                        <span class="btn-icon">➕</span>
+                        Add New Rule
+                    </button>
+                </div>
+                <div class="rules-grid" id="detection-rules-grid">
+                    <!-- Se llena dinámicamente -->
+                </div>
+            </div>
+        </section>
+
+        <!-- Página de Eventos -->
+        <section id="events-page" class="page-content">
+            <div class="page-header">
+                <h2>📋 Security Events</h2>
+                <div class="page-controls">
+                    <input type="text" id="events-search" placeholder="Search events..." class="search-input">
+                    <select id="events-filter" class="filter-select">
+                        <option value="">All Severity Levels</option>
+                        <option value="critical">Critical</option>
+                        <option value="high">High</option>
+                        <option value="medium">Medium</option>
+                        <option value="low">Low</option>
+                        <option value="info">Info</option>
+                    </select>
+                    <button class="control-btn" id="export-events">
+                        <span class="btn-icon">💾</span>
+                        Export
+                    </button>
+                </div>
+            </div>
+            <div class="events-table-container">
+                <table class="events-table" id="events-table">
+                    <thead>
+                    <tr>
+                        <th>Timestamp</th>
+                        <th>Severity</th>
+                        <th>Source</th>
+                        <th>Event Type</th>
+                        <th>Description</th>
+                        <th>Actions</th>
+                    </tr>
+                    </thead>
+                    <tbody id="events-table-body">
+                    <!-- Se llena dinámicamente -->
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- Página de Alertas -->
+        <section id="alerts-page" class="page-content">
+            <div class="page-header">
+                <h2>⚠️ Security Alerts</h2>
+                <div class="page-controls">
+                    <select id="alerts-status-filter" class="filter-select">
+                        <option value="">All Statuses</option>
+                        <option value="active">Active</option>
+                        <option value="acknowledged">Acknowledged</option>
+                        <option value="resolved">Resolved</option>
+                    </select>
+                    <button class="control-btn" id="mark-all-read">
+                        <span class="btn-icon">✅</span>
+                        Mark All Read
+                    </button>
+                </div>
+            </div>
+            <div class="alerts-container" id="alerts-container">
+                <!-- Se llena dinámicamente -->
+            </div>
+        </section>
+
+        <!-- Otras páginas (placeholder) -->
+        <section id="threat-hunt-page" class="page-content">
+            <div class="page-header">
+                <h2>🎯 Threat Hunting</h2>
+            </div>
+            <div class="placeholder-content">
+                <span class="placeholder-icon">🎯</span>
+                <h3>Threat Hunting Module</h3>
+                <p>Advanced threat hunting capabilities coming soon...</p>
+            </div>
+        </section>
+
+        <section id="reports-page" class="page-content">
+            <div class="page-header">
+                <h2>📑 Reports</h2>
+            </div>
+            <div class="placeholder-content">
+                <span class="placeholder-icon">📑</span>
+                <h3>Reports & Analytics</h3>
+                <p>Comprehensive reporting dashboard coming soon...</p>
+            </div>
+        </section>
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="footer-content">
+            <span>RustSIEM v1.0.0 | Built with Rust + Warp | Processing 2.8K events/sec</span>
+            <div class="footer-info">
+                <span>System Load: 23% | Memory: 2.1GB</span>
+            </div>
+        </div>
+    </footer>
+</div>
+
+<!-- Loading Overlay -->
+<div id="loading-overlay" class="loading-overlay">
+    <div class="loading-spinner">
+        <div class="spinner"></div>
+        <div class="loading-text">Loading RustSIEM...</div>
+    </div>
+</div>
+
+<!-- Scripts -->
+<script src="/static/script.js"></script>
+</body>
+</html>

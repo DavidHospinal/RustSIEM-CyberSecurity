@@ -1,0 +1,42 @@
+detection_rules:
+  sql_injection:
+    enabled: true
+    patterns:
+      - "union select"
+      - "drop table"
+      - "insert into"
+    threshold: 0.7
+
+  xss:
+    enabled: true
+    patterns:
+      - "<script>"
+      - "javascript:"
+      - "onerror="
+    threshold: 0.8
+
+  brute_force:
+    enabled: true
+    max_attempts: 5
+    time_window_minutes: 10
+
+ml_config:
+  enabled: true
+  model_type: "isolation_forest"
+  training_window_hours: 24
+  anomaly_threshold: 0.5
+
+alerting:
+  email:
+    enabled: false
+    smtp_server: "smtp.gmail.com"
+    smtp_port: 587
+    username: ""
+    password: ""
+    recipients:
+      - "admin@example.com"
+
+  webhooks:
+    - url: "https://hooks.slack.com/services/YOUR/SLACK/WEBHOOK"
+      headers:
+        Content-Type: "application/json"

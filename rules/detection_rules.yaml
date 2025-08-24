@@ -1,0 +1,20 @@
+sql_injection:
+  enabled: true
+  patterns:
+    - "(?i)(union|select|insert|update|delete|drop|create|alter)\\s+"
+    - "(?i)(\\'|\\\"|;|--|\\#|\\|\\|)"
+    - "(?i)(or|and)\\s+\\d+\\s*=\\s*\\d+"
+  threshold: 0.7
+
+xss:
+  enabled: true
+  patterns:
+    - "(?i)<script[^>]*>"
+    - "(?i)javascript:"
+    - "(?i)on(click|load|error|mouseover)\\s*="
+  threshold: 0.8
+
+brute_force:
+  enabled: true
+  max_attempts: 5
+  time_window_minutes: 10

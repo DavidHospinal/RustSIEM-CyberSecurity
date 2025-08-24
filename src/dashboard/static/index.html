@@ -166,7 +166,26 @@
                 <div class="metric-card" id="active-sources-card">
                     <div class="metric-header">
                         <span class="metric-icon">📡</span>
-                        <span class="metric-title">Active Log Sources</span>
+                        <span class="metric-title">
+                            <div class="tooltip-container">
+                                <span class="tooltip-term">Active Log Sources</span>
+                                <div class="tooltip-content">
+                                    <div class="tooltip-title">Fuentes de Logs Activas</div>
+                                    <div class="tooltip-description">
+                                        Número de sistemas que están enviando logs de seguridad al SIEM. Incluye servidores web, bases de datos, firewalls y otros componentes.
+                                    </div>
+                                    <div class="tooltip-examples">
+                                        <div class="tooltip-examples-title">Tipos de fuentes comunes:</div>
+                                        <ul class="tooltip-examples-list">
+                                            <li>Apache/Nginx: Servidores web</li>
+                                            <li>SSH: Servicios de acceso remoto</li>
+                                            <li>MySQL/PostgreSQL: Bases de datos</li>
+                                            <li>Firewall: Dispositivos de red</li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                        </span>
                     </div>
                     <div class="metric-value" id="metric-active-sources">0</div>
                     <div class="metric-trend">
@@ -295,7 +314,26 @@
                     <div class="pattern-card">
                         <div class="pattern-header">
                             <span class="pattern-icon">📈</span>
-                            <span class="pattern-name">DDoS</span>
+                            <span class="pattern-name">
+                                <div class="tooltip-container">
+                                    <span class="tooltip-term">DDoS</span>
+                                    <div class="tooltip-content">
+                                        <div class="tooltip-title">Ataques DDoS (Distributed Denial of Service)</div>
+                                        <div class="tooltip-description">
+                                            Ataques que buscan saturar un servicio con tráfico masivo para hacerlo inaccesible a usuarios legítimos.
+                                        </div>
+                                        <div class="tooltip-examples">
+                                            <div class="tooltip-examples-title">Tipos de ataques DDoS:</div>
+                                            <ul class="tooltip-examples-list">
+                                                <li>Volumétricos: Saturan el ancho de banda</li>
+                                                <li>De protocolo: Explotan debilidades en protocolos</li>
+                                                <li>De aplicación: Atacan servicios específicos</li>
+                                                <li>Reflexión: Amplifican el tráfico usando terceros</li>
+                                            </ul>
+                                        </div>
+                                    </div>
+                                </div>
+                            </span>
                         </div>
                         <div class="pattern-count" id="ddos-count">0</div>
                         <div class="pattern-bar">
@@ -417,15 +455,84 @@
             </div>
         </section>
 
-        <!-- Otras páginas (placeholder) -->
+        <!-- Página de Threat Hunting -->
         <section id="threat-hunt-page" class="page-content">
             <div class="page-header">
                 <h2>🎯 Threat Hunting</h2>
+                <div class="page-controls">
+                    <select id="hunt-category-filter" class="filter-select">
+                        <option value="">Todas las Categorías</option>
+                        <option value="Data Exfiltration">Exfiltración de Datos</option>
+                        <option value="APT Detection">Detección APT</option>
+                        <option value="IOC Hunting">Búsqueda IOC</option>
+                    </select>
+                    <button class="control-btn" id="new-hunt-btn">
+                        <span class="btn-icon">🔍</span>
+                        Nueva Búsqueda
+                    </button>
+                </div>
             </div>
-            <div class="placeholder-content">
-                <span class="placeholder-icon">🎯</span>
-                <h3>Threat Hunting Module</h3>
-                <p>Advanced threat hunting capabilities coming soon...</p>
+
+            <!-- Consultas de Hunting Predefinidas -->
+            <div class="hunt-queries-section">
+                <div class="section-header">
+                    <h3>🔍 Consultas de Hunting Disponibles</h3>
+                    <div class="hunt-status">
+                        <span class="status-indicator active"></span>
+                        <span>Motor de Hunting: Activo</span>
+                    </div>
+                </div>
+                <div class="hunt-queries-grid" id="hunt-queries-grid">
+                    <!-- Se llena dinámicamente -->
+                </div>
+            </div>
+
+            <!-- Resultados de Hunting Activos -->
+            <div class="active-hunts-section">
+                <div class="section-header">
+                    <h3>📊 Resultados de Hunting</h3>
+                </div>
+                <div class="hunt-results-container" id="hunt-results-container">
+                    <!-- Se llena dinámicamente -->
+                </div>
+            </div>
+
+            <!-- IOCs (Indicadores de Compromiso) -->
+            <div class="iocs-section">
+                <div class="section-header">
+                    <h3>🔴 Indicadores de Compromiso (IOCs)</h3>
+                    <button class="control-btn" id="add-ioc-btn">
+                        <span class="btn-icon">➕</span>
+                        Añadir IOC
+                    </button>
+                </div>
+                <div class="iocs-table-container">
+                    <table class="iocs-table" id="iocs-table">
+                        <thead>
+                        <tr>
+                            <th>Tipo</th>
+                            <th>Valor</th>
+                            <th>Nivel de Amenaza</th>
+                            <th>Fuente</th>
+                            <th>Última Detección</th>
+                            <th>Acciones</th>
+                        </tr>
+                        </thead>
+                        <tbody id="iocs-table-body">
+                        <!-- Se llena dinámicamente -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Análisis MITRE ATT&CK -->
+            <div class="mitre-analysis-section">
+                <div class="section-header">
+                    <h3>🛡️ Mapeo MITRE ATT&CK</h3>
+                </div>
+                <div class="mitre-tactics-grid" id="mitre-tactics-grid">
+                    <!-- Se llena dinámicamente -->
+                </div>
             </div>
         </section>
 

@@ -1,7 +1,8 @@
 use std::collections::HashMap;
-use chrono::{DateTime, Utc};
+use chrono::Utc;
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
+use log::info;
 use crate::{LogEvent, Severity, EventType};
 
 /// Patrón de ataque realista para simulación educativa
@@ -66,7 +67,7 @@ impl RealisticSimulator {
         let patterns = Self::load_realistic_attack_patterns();
         let baseline_metrics = Self::create_baseline_metrics();
         let geo_distribution = Self::create_geo_threat_map();
-        
+
         Self {
             patterns,
             baseline_metrics,
@@ -79,13 +80,13 @@ impl RealisticSimulator {
     /// Genera un evento de log realista basado en escenarios reales
     pub fn generate_realistic_event(&mut self) -> LogEvent {
         self.event_counter += 1;
-        
+
         // Seleccionar patrón de ataque de manera ponderada
         let pattern = self.select_weighted_attack_pattern();
-        
+
         // Generar IP de origen realista basada en geografía
         let source_ip = self.generate_realistic_source_ip(&pattern);
-        
+
         // Crear evento basado en el patrón seleccionado
         let event = LogEvent {
             id: Uuid::new_v4(),
@@ -136,7 +137,7 @@ impl RealisticSimulator {
                     "El uso de comentarios (--) permite ignorar el resto de la consulta original".to_string()
                 ],
             },
-            
+
             // XSS Patterns
             AttackPattern {
                 id: "xss_reflected".to_string(),
@@ -243,7 +244,7 @@ impl RealisticSimulator {
         let weights = vec![30, 25, 35, 10]; // SQL, XSS, Brute Force, Anomaly
         let total_weight: u32 = weights.iter().sum();
         let random_weight = rng.gen_range(0..total_weight);
-        
+
         let mut cumulative = 0;
         for (i, weight) in weights.iter().enumerate() {
             cumulative += weight;
@@ -258,17 +259,17 @@ impl RealisticSimulator {
     fn generate_realistic_source_ip(&self, pattern: &AttackPattern) -> String {
         use rand::Rng;
         let mut rng = rand::thread_rng();
-        
+
         match pattern.origin_country.as_str() {
-            "China" => format!("{}.{}.{}.{}", 
-                rng.gen_range(1..223), rng.gen_range(0..255), 
-                rng.gen_range(0..255), rng.gen_range(1..254)),
-            "Russia" => format!("{}.{}.{}.{}", 
-                rng.gen_range(46..95), rng.gen_range(0..255), 
-                rng.gen_range(0..255), rng.gen_range(1..254)),
-            "Various" => format!("{}.{}.{}.{}", 
-                rng.gen_range(10..200), rng.gen_range(0..255), 
-                rng.gen_range(0..255), rng.gen_range(1..254)),
+            "China" => format!("{}.{}.{}.{}",
+                               rng.gen_range(1..223), rng.gen_range(0..255),
+                               rng.gen_range(0..255), rng.gen_range(1..254)),
+            "Russia" => format!("{}.{}.{}.{}",
+                                rng.gen_range(46..95), rng.gen_range(0..255),
+                                rng.gen_range(0..255), rng.gen_range(1..254)),
+            "Various" => format!("{}.{}.{}.{}",
+                                 rng.gen_range(10..200), rng.gen_range(0..255),
+                                 rng.gen_range(0..255), rng.gen_range(1..254)),
             _ => format!("192.168.{}.{}", rng.gen_range(1..255), rng.gen_range(1..254)),
         }
     }
@@ -298,7 +299,7 @@ impl RealisticSimulator {
     fn generate_realistic_log_message(&self, pattern: &AttackPattern) -> String {
         use rand::Rng;
         let mut rng = rand::thread_rng();
-        
+
         match pattern.attack_type.as_str() {
             "sql_injection" => {
                 let payload = &pattern.payloads[rng.gen_range(0..pattern.payloads.len())];
@@ -408,7 +409,7 @@ impl RealisticSimulator {
     /// Crea mapa de distribución de amenazas por geografía
     fn create_geo_threat_map() -> GeoThreatMap {
         let mut threat_origins = HashMap::new();
-        
+
         threat_origins.insert("CN".to_string(), ThreatOriginInfo {
             country_name: "China".to_string(),
             country_code: "CN".to_string(),

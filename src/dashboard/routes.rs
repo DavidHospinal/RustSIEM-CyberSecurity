@@ -238,6 +238,56 @@ impl DashboardRoutes {
             })
     }
 
+    /// Ruta para obtener consultas de threat hunting disponibles
+    pub fn threat_hunt_queries_route(&self) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
+        let detector = self.detector.clone();
+        
+        warp::path!("api" / "threat-hunt" / "queries")
+            .and(warp::get())
+            .and_then(move || {
+                let detector = detector.clone();
+                async move {
+                    let queries = detector.get_available_hunt_queries();
+                    Ok::<warp::reply::Json, warp::Rejection>(warp::reply::json(&ApiResponse {
+                        success: true,
+                        data: queries,
+                        message: None,
+                        timestamp: Utc::now(),
+                    }))
+                }
+            })
+    }
+
+    /// Ruta para ejecutar una consulta de threat hunting
+    pub fn execute_threat_hunt_route(&self) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
+        let detector = self.detector.clone();
+        
+        warp::path!("api" / "threat-hunt" / "execute" / String)
+            .and(warp::post())
+            .and_then(move |query_id: String| {
+                let detector = detector.clone();
+                async move {
+                    match detector.execute_threat_hunt(&query_id).await {
+                        Ok(result) => Ok::<warp::reply::Json, warp::Rejection>(warp::reply::json(&ApiResponse {
+                            success: true,
+                            data: result,
+                            message: None,
+                            timestamp: Utc::now(),
+                        })),
+                        Err(e) => {
+                            tracing::error!("Error ejecutando threat hunt: {}", e);
+                            Ok::<warp::reply::Json, warp::Rejection>(warp::reply::json(&ApiResponse {
+                                success: false,
+                                data: serde_json::json!({}),
+                                message: Some(format!("Error ejecutando consulta: {}", e)),
+                                timestamp: Utc::now(),
+                            }))
+                        }
+                    }
+                }
+            })
+    }
+
     /// Obtiene estadísticas del dashboard
     async fn get_dashboard_stats(storage: Arc<StorageManager>) -> Result<DashboardStats> {
         let stats = storage.get_dashboard_stats().await?;

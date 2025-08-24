@@ -6,6 +6,7 @@ use super::{
     sql_injection::SqlInjectionDetector,
     brute_force::BruteForceDetector,
     anomaly_ml::{AnomalyMLDetector, LogEventFeatures},
+    threat_hunting::ThreatHuntingEngine,
 };
 use anyhow::{Result, Context};
 use std::sync::Arc;
@@ -70,6 +71,7 @@ pub struct DetectorEngine {
     xss_detector: XssDetector,
     brute_force_detector: BruteForceDetector,
     anomaly_detector: AnomalyMLDetector,
+    threat_hunting_engine: ThreatHuntingEngine,
     storage: Arc<StorageManager>,
     alert_manager: Arc<AlertManager>,
     config: Arc<RwLock<DetectorConfig>>,
@@ -86,6 +88,7 @@ impl DetectorEngine {
             xss_detector: XssDetector::new(),
             brute_force_detector: BruteForceDetector::new(),
             anomaly_detector: AnomalyMLDetector::new(),
+            threat_hunting_engine: ThreatHuntingEngine::new(),
             storage,
             alert_manager,
             config: Arc::new(RwLock::new(DetectorConfig::default())),
@@ -608,6 +611,23 @@ impl DetectorEngine {
         }
 
         health
+    }
+
+    /// Métodos de Threat Hunting
+
+    /// Ejecuta una consulta de threat hunting
+    pub async fn execute_threat_hunt(&self, query_id: &str) -> Result<super::threat_hunting::HuntResult> {
+        self.threat_hunting_engine.execute_hunt(query_id, &*self.storage).await
+    }
+
+    /// Obtiene todas las consultas de hunting disponibles
+    pub fn get_available_hunt_queries(&self) -> Vec<&super::threat_hunting::HuntQuery> {
+        self.threat_hunting_engine.get_available_hunts()
+    }
+
+    /// Añade un nuevo IOC al motor de hunting
+    pub fn add_threat_ioc(&mut self, ioc: super::threat_hunting::IndicatorOfCompromise) {
+        self.threat_hunting_engine.add_ioc(ioc);
     }
 }
 

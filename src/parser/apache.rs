@@ -1,10 +1,8 @@
 ﻿use crate::{LogEvent, Severity, EventType};
 use anyhow::Result;
 use regex::Regex;
-use chrono::{DateTime, Utc, NaiveDateTime};
+use chrono::{DateTime, Utc};
 use uuid::Uuid;
-use std::str::FromStr;
-
 
 #[derive(Clone)]
 pub struct ApacheParser {
@@ -218,7 +216,6 @@ impl crate::parser::common::LogParser for ApacheParser {
         self.common_log_regex.is_match(line) || self.combined_log_regex.is_match(line)
     }
 
-    // AÑADIR estos dos métodos:
     fn parser_name(&self) -> &'static str {
         "apache"
     }

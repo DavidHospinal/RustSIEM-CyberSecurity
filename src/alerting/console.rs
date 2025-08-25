@@ -27,7 +27,7 @@ pub struct ConsoleAlerterConfig {
 }
 
 /// Estilos de formato para la consola
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub enum ConsoleFormat {
     Compact,
     Detailed,
@@ -44,7 +44,7 @@ pub enum ConsoleSeverityFilter {
 }
 
 /// Estadísticas del alertador de consola
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct ConsoleStatistics {
     pub alerts_sent: u64,
     pub alerts_failed: u64,

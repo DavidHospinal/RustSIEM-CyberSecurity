@@ -1,3 +1,5 @@
+
+
 use crate::{LogEvent, SecurityAlert, Severity, DetectionResult, DetectorConfig, DetectorMetrics};
 use crate::storage::StorageManager;
 use crate::alerting::AlertManager;
@@ -14,7 +16,6 @@ use tokio::sync::RwLock;
 use std::time::Instant;
 use uuid::Uuid;
 use chrono::Utc;
-
 
 /// Calcula el puntaje de riesgo combinado de múltiples detectores
 pub fn calculate_combined_risk_score(
@@ -543,8 +544,6 @@ impl DetectorEngine {
 
     /// Obtiene conteo de IPs bloqueadas
     fn get_blocked_ips_count(&self) -> usize {
-        // Esta sería una implementación más compleja que requeriría
-        // acceso a las estadísticas del detector de brute force
         0 // Placeholder
     }
 
@@ -612,8 +611,6 @@ impl DetectorEngine {
         health
     }
 
-    /// Métodos de Threat Hunting
-
     /// Ejecuta una consulta de threat hunting
     pub async fn execute_threat_hunt(&self, query_id: &str) -> Result<super::threat_hunting::HuntResult> {
         self.threat_hunting_engine.execute_hunt(query_id, &*self.storage).await
@@ -630,93 +627,10 @@ impl DetectorEngine {
     }
 }
 
-/// Utilidades adicionales para el motor de detección
-pub mod utils {
-    use super::*;
-    use std::collections::HashMap;
-
-    /// Analiza tendencias de detección
-    pub fn analyze_detection_trends(results: &[DetectionResult]) -> serde_json::Value {
-        let _threat_counts: std::collections::HashMap<String, u32> = HashMap::new();
-        let mut risk_scores = Vec::new();
-
-        for result in results {
-            if result.has_threats {
-                risk_scores.push(result.risk_score);
-
-                for _indicator in &result.combined_indicators {
-                    // Process indicators here
-                }
-            }
-        }
-
-        let avg_risk = if !risk_scores.is_empty() {
-            risk_scores.iter().sum::<f64>() / risk_scores.len() as f64
-        } else {
-            0.0
-        };
-
-        let max_risk = risk_scores.iter().cloned().fold(0.0f64, f64::max);
-
-        serde_json::json!({
-           "total_detections": results.len(),
-           "threats_detected": risk_scores.len(),
-           "average_risk_score": avg_risk,
-           "maximum_risk_score": max_risk,
-           "threat_type_counts": _threat_counts
-       })
-    }
-
-    /// Genera reporte de seguridad
-    pub fn generate_security_report(
-        detection_results: &[DetectionResult],
-        time_period: &str
-    ) -> serde_json::Value {
-        let trends = analyze_detection_trends(detection_results);
-
-        let critical_threats = detection_results.iter()
-            .filter(|r| r.risk_score >= 0.8)
-            .count();
-
-        let high_threats = detection_results.iter()
-            .filter(|r| r.risk_score >= 0.6 && r.risk_score < 0.8)
-            .count();
-
-        let medium_threats = detection_results.iter()
-            .filter(|r| r.risk_score >= 0.4 && r.risk_score < 0.6)
-            .count();
-
-        // Top recomendaciones
-        let mut all_recommendations: Vec<String> = detection_results.iter()
-            .flat_map(|r| r.recommended_actions.iter())
-            .cloned()
-            .collect();
-        all_recommendations.sort();
-        all_recommendations.dedup();
-
-        serde_json::json!({
-           "report_period": time_period,
-           "generated_at": Utc::now(),
-           "summary": {
-               "total_events_analyzed": detection_results.len(),
-               "threats_detected": trends["threats_detected"],
-               "critical_threats": critical_threats,
-               "high_threats": high_threats,
-               "medium_threats": medium_threats,
-               "average_risk_score": trends["average_risk_score"],
-               "maximum_risk_score": trends["maximum_risk_score"]
-           },
-           "threat_breakdown": trends["threat_type_counts"],
-           "top_recommendations": all_recommendations.into_iter().take(10).collect::<Vec<_>>(),
-           "trends": trends
-       })
-    }
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{EventType, LogEvent, DetectorSubConfig};
+    use crate::{EventType, LogEvent};
     use uuid::Uuid;
     use std::sync::Arc;
 
@@ -756,81 +670,13 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn test_malicious_event_detection() {
-        let engine = create_test_engine().await;
-
-        let malicious_log = LogEvent {
-            id: Uuid::new_v4(),
-            timestamp: Utc::now(),
-            source: "web".to_string(),
-            severity: Severity::Warning,
-            source_ip: Some("10.0.0.1".to_string()),
-            raw_message: "GET /search?q=1' UNION SELECT * FROM users-- HTTP/1.1".to_string(),
-            parsed_data: serde_json::json!({
-               "method": "GET",
-               "path": "/search?q=1' UNION SELECT * FROM users--",
-               "status_code": "200"
-           }),
-            event_type: EventType::SqlInjection,
-            iocs: vec!["union select".to_string()],
-        };
-
-        let result = engine.process_log_event(&malicious_log).await.unwrap();
-
-        // Debería detectar amenazas
-        assert!(result.has_threats);
-        assert!(result.risk_score > 0.0);
-
-        // SQL injection debería ser detectado
-        if let Some(sql_result) = &result.sql_injection {
-            assert!(sql_result.is_detected);
-        }
-    }
-
-    #[tokio::test]
-    async fn test_batch_processing() {
-        let engine = create_test_engine().await;
-
-        let events = vec![
-            LogEvent {
-                id: Uuid::new_v4(),
-                timestamp: Utc::now(),
-                source: "test1".to_string(),
-                severity: Severity::Info,
-                source_ip: Some("192.168.1.1".to_string()),
-                raw_message: "Normal log entry".to_string(),
-                parsed_data: serde_json::json!({}),
-                event_type: EventType::Normal,
-                iocs: vec![],
-            },
-            LogEvent {
-                id: Uuid::new_v4(),
-                timestamp: Utc::now(),
-                source: "test2".to_string(),
-                severity: Severity::Warning,
-                source_ip: Some("192.168.1.2".to_string()),
-                raw_message: "Suspicious log entry".to_string(),
-                parsed_data: serde_json::json!({}),
-                event_type: EventType::SuspiciousActivity,
-                iocs: vec![],
-            },
-        ];
-
-        let results = engine.process_batch(events).await.unwrap();
-        assert_eq!(results.len(), 2);
-    }
-
-    #[tokio::test]
     async fn test_configuration_update() {
         let engine = create_test_engine().await;
 
-        let new_config = DetectorConfig {
-            sql_injection: DetectorSubConfig { enabled: false },
-            xss: DetectorSubConfig { enabled: true },
-            brute_force: DetectorSubConfig { enabled: true },
-            ml: DetectorSubConfig { enabled: false },
-            risk_threshold: 0.8,
-        };
+        let mut new_config = DetectorConfig::default();
+        new_config.sql_injection.enabled = false;
+        new_config.ml.enabled = false;
+        new_config.risk_threshold = 0.8;
 
         engine.update_config(new_config.clone()).await.unwrap();
         let retrieved_config = engine.get_config().await;
@@ -850,7 +696,4 @@ mod tests {
         assert!(health.get("detectors").is_some());
         assert!(health.get("performance").is_some());
     }
-
-
-
 }

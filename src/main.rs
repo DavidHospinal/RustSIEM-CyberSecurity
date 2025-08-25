@@ -12,7 +12,7 @@ use rust_siem::{
     dashboard::DashboardServer,
     parser::{apache::ApacheParser, nginx::NginxParser, ssh::SshParser},
     simulator::RealisticSimulator,
-    LogEvent, Severity, EventType, SecurityAlert,
+    EventType, SecurityAlert,
 };
 use chrono::Utc;
 use uuid::Uuid;
@@ -220,7 +220,7 @@ async fn simulate_log_events(
         }
 
         // Ejecutar detección en el evento
-        match detector.analyze_event(&event).await {
+        match detector.process_log_event(&event).await {
             Ok(detection_result) => {
                 if detection_result.has_threats {
                     info!("Amenaza detectada - Confianza: {:.2}%, Riesgo: {:.2}", 
@@ -270,7 +270,7 @@ async fn simulate_log_events(
         // Log progreso cada 25 eventos
         if counter % 25 == 0 {
             info!("Eventos educativos procesados: {} - Escenario actual: {}", 
-                  counter, simulator.current_scenario.as_ref().unwrap_or(&"N/A".to_string()));
+                   counter, simulator.get_current_scenario_name());
         }
     }
 }

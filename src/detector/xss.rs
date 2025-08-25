@@ -8,6 +8,7 @@ use serde::{Deserialize, Serialize};
 use urlencoding;
 use html_escape;
 /// Detector especializado en Cross-Site Scripting (XSS)
+#[allow(dead_code)]
 #[derive(Clone)]
 pub struct XssDetector {
     patterns: Vec<XssPattern>,

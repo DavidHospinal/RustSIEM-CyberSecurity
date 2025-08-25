@@ -5,9 +5,10 @@ pub mod anomaly_ml;
 pub mod threat_hunting;
 pub mod engine;
 
-pub use engine::DetectorEngine;
+pub use engine::{DetectorEngine, calculate_combined_risk_score};
 pub use sql_injection::SqlInjectionDetector;
 pub use xss::XssDetector;
 pub use brute_force::BruteForceDetector;
 pub use anomaly_ml::AnomalyMLDetector;
 pub use threat_hunting::ThreatHuntingEngine;
+

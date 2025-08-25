@@ -1,6 +1,6 @@
 use crate::{LogEvent, SecurityAlert, Severity};
 use crate::storage::{MemoryStorage, SqliteStorage};
-use anyhow::{Result, Context};
+use anyhow::Result;
 use std::sync::Arc;
 use uuid::Uuid;
 use chrono::{DateTime, Utc};

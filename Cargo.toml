@@ -68,7 +68,7 @@ tokio-tungstenite = "0.20"
 futures-util = "0.3"
 futures = "0.3"
 rand = "0.8"
-
+tempfile = "3.0"
 
 # CLI parsing
 clap = { version = "4.0", features = ["derive"] }

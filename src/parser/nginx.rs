@@ -445,6 +445,7 @@ impl Default for NginxParser {
 mod tests {
     use super::*;
     use crate::parser::common::LogParser;
+    use crate::EventType;
 
     #[test]
     fn test_parse_nginx_access_log() {

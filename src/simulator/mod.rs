@@ -522,4 +522,11 @@ impl Default for RealisticSimulator {
     fn default() -> Self {
         Self::new()
     }
+
+}
+impl RealisticSimulator {
+    /// Obtiene el nombre del escenario actual
+    pub fn get_current_scenario_name(&self) -> String {
+        self.current_scenario.as_ref().unwrap_or(&"N/A".to_string()).clone()
+    }
 }

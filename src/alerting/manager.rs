@@ -2,7 +2,7 @@ use crate::SecurityAlert;
 use super::console::ConsoleAlerter;
 use super::email::EmailAlerter;
 use super::webhook::WebhookAlerter;
-use anyhow::Result;
+use anyhow::{Result, Context};
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
@@ -12,7 +12,8 @@ use tokio::time::{Duration, interval};
 use uuid::Uuid;
 
 /// Manager principal que coordina todos los alertadores
-type AlertReceiver = Arc<RwLock<Option<mpsc::UnboundedReceiver<AlertManagerCommand>>>>;
+
+
 pub struct AlertManager {
     config: AlertManagerConfig,
     console_alerter: Option<ConsoleAlerter>,
@@ -22,8 +23,6 @@ pub struct AlertManager {
     batch_queue: Arc<RwLock<HashMap<String, AlertBatch>>>,
     statistics: Arc<RwLock<AlertManagerStatistics>>,
     alert_sender: mpsc::UnboundedSender<AlertManagerCommand>,
-    alert_receiver: AlertReceiver,
-
 }
 
 /// Configuración del manager de alertas
@@ -217,7 +216,7 @@ impl AlertManager {
     }
 
     pub async fn with_config(config: AlertManagerConfig) -> Result<Self> {
-        let (alert_sender, alert_receiver) = mpsc::unbounded_channel();
+        let (alert_sender, _) = mpsc::unbounded_channel();
 
         let console_alerter = if config.console_enabled {
             Some(ConsoleAlerter::new())
@@ -246,9 +245,38 @@ impl AlertManager {
             batch_queue: Arc::new(RwLock::new(HashMap::new())),
             statistics: Arc::new(RwLock::new(AlertManagerStatistics::default())),
             alert_sender,
-            alert_receiver: Arc::new(RwLock::new(Some(alert_receiver))),
-
         })
+    }
+
+    /// Crea una nueva instancia con configuración por defecto de forma síncrona
+    pub fn new_sync() -> Self {
+        let (alert_sender, _) = mpsc::unbounded_channel();
+
+        Self {
+            config: AlertManagerConfig::default(),
+            console_alerter: Some(ConsoleAlerter::new()),
+            email_alerter: None,
+            webhook_alerter: None,
+            alert_queue: Arc::new(RwLock::new(Vec::new())),
+            batch_queue: Arc::new(RwLock::new(HashMap::new())),
+            statistics: Arc::new(RwLock::new(AlertManagerStatistics::default())),
+            alert_sender,
+        }
+    }
+
+    /// Inicializa los alertadores que requieren async
+    pub async fn initialize_async_alerters(&mut self) -> Result<()> {
+        if self.config.email_enabled && self.email_alerter.is_none() {
+            self.email_alerter = Some(
+                EmailAlerter::new().await.context("Failed to create email alerter")?
+            );
+        }
+
+        if self.config.webhook_enabled && self.webhook_alerter.is_none() {
+            self.webhook_alerter = Some(WebhookAlerter::new());
+        }
+
+        Ok(())
     }
 
     /// Inicia el manager de alertas
@@ -260,79 +288,55 @@ impl AlertManager {
 
         tracing::info!("Starting alert manager...");
 
-
-
         // Enviar mensaje de inicio
         if let Some(ref console) = self.console_alerter {
             console.send_startup_banner("1.0.0").await?;
         }
 
-        // Obtener receiver y procesarlo
-        let mut receiver = {
-            let mut receiver_guard = self.alert_receiver.write().await;
-            receiver_guard.take().expect("Alert receiver already taken")
 
-        };
+        let batch_timeout = self.config.batch_timeout_minutes as u64 * 60;
+        let health_check_timeout = self.config.health_check_interval_minutes as u64 * 60;
 
-        // Configurar intervalos
-        let mut batch_interval = interval(Duration::from_secs(self.config.batch_timeout_minutes as u64 * 60));
-        let mut health_check_interval = interval(Duration::from_secs(self.config.health_check_interval_minutes as u64 * 60));
-        let mut cleanup_interval = interval(Duration::from_secs(3600)); // Cleanup cada hora
+        // Crear intervalos
+        let mut batch_interval = interval(Duration::from_secs(batch_timeout));
+        let mut health_check_interval = interval(Duration::from_secs(health_check_timeout));
+        let mut cleanup_interval = interval(Duration::from_secs(3600));
 
-        // Loop principal de procesamiento
+        // Loop principal sin problemas de ownership
         loop {
             tokio::select! {
-                // Procesar comando recibido
-                command = receiver.recv() => {
-                    match command {
-                        Some(AlertManagerCommand::SendAlert(alert)) => {
-                            self.process_alert_internal(alert).await;
-                        },
-                        Some(AlertManagerCommand::ProcessBatch(batch_id)) => {
-                            self.process_batch_internal(&batch_id).await;
-                        },
-                        Some(AlertManagerCommand::HealthCheck) => {
-                            self.perform_health_check().await;
-                        },
-                        Some(AlertManagerCommand::ProcessRetries) => {
-                            self.process_retries().await;
-                        },
-                        Some(AlertManagerCommand::Cleanup) => {
-                            self.cleanup_old_data().await;
-                        },
-                        Some(AlertManagerCommand::Shutdown) => {
-                            tracing::info!("Alert manager shutting down...");
-                            break;
-                        },
-                        None => {
-                            tracing::warn!("Alert manager channel closed");
-                            break;
-                        }
-                    }
-                },
-
-                // Procesar batches por timeout
                 _ = batch_interval.tick() => {
+                    tracing::debug!("Processing timed out batches");
                     self.process_timed_out_batches().await;
                 },
 
-                // Health check periódico
                 _ = health_check_interval.tick() => {
+                    tracing::debug!("Performing health check");
                     self.perform_health_check().await;
                 },
 
-                // Cleanup periódico
                 _ = cleanup_interval.tick() => {
+                    tracing::debug!("Cleaning up old data");
                     self.cleanup_old_data().await;
+                },
+
+                // Condición de salida opcional
+                _ = tokio::signal::ctrl_c() => {
+                    tracing::info!("Received shutdown signal");
+                    break;
                 }
             }
         }
+
+        // Procesar batches pendientes antes de parar
+        self.flush_all_batches().await?;
 
         // Enviar mensaje de shutdown
         if let Some(ref console) = self.console_alerter {
             console.send_shutdown_message().await?;
         }
 
+        tracing::info!("Alert manager stopped");
         Ok(())
     }
 
@@ -1229,7 +1233,7 @@ impl AlertManager {
 
 impl Default for AlertManager {
     fn default() -> Self {
-        futures::executor::block_on(Self::new()).unwrap()
+        Self::new_sync()
     }
 }
 
@@ -1448,7 +1452,7 @@ mod tests {
         let alert1 = create_test_alert();
         let alert2 = SecurityAlert {
             title: alert1.title.clone(),
-            severity: alert1.severity,
+            severity: alert1.severity.clone(),
             ..create_test_alert()
         };
 

@@ -14,6 +14,8 @@ use chrono::{DateTime, Utc};
 use uuid::Uuid;
 
 
+
+
 /// Representa un evento de log parseado
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct LogEvent {

@@ -4,6 +4,7 @@ use regex::Regex;
 use chrono::Utc;
 use uuid::Uuid;
 #[derive(Clone)]
+#[allow(dead_code)]
 pub struct SshParser {
     auth_regex: Regex,
     main_regex: Regex,

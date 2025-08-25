@@ -2,9 +2,10 @@
 use anyhow::{Result, Context};
 use chrono::{DateTime, Utc};
 use sqlx::{Row, SqlitePool, Sqlite, migrate::MigrateDatabase};
-use std::path::Path;
+
 use uuid::Uuid;
 use serde_json;
+
 
 /// Implementación de storage usando SQLite para persistencia
 pub struct SqliteStorage {
@@ -660,7 +661,7 @@ mod tests {
     use tempfile::tempdir;
 
     async fn create_test_storage() -> SqliteStorage {
-        let temp_dir = tempdir().unwrap();
+        let temp_dir = tempfile::tempdir().unwrap();
         let db_path = temp_dir.path().join("test.db");
         let database_url = format!("sqlite:{}", db_path.display());
         SqliteStorage::new(&database_url).await.unwrap()

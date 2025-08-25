@@ -1891,6 +1891,7 @@ dependencies = [
  "serde_yaml",
  "smartcore",
  "sqlx",
+ "tempfile",
  "thiserror",
  "tokio",
  "tokio-tungstenite 0.20.1",

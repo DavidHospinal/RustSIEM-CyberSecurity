@@ -7,6 +7,7 @@ use serde::{Deserialize, Serialize};
 use urlencoding;
 
 /// Detector especializado en SQL Injection
+#[allow(dead_code)]
 #[derive(Clone)]
 pub struct SqlInjectionDetector {
     patterns: Vec<SqlPattern>,

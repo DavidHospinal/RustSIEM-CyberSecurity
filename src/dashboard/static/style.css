@@ -3158,3 +3158,88 @@ body {
         justify-content: center;
     }
 }
+
+/* ====================
+   BOTÓN EDUCATIVO
+   ==================== */
+
+.educational-view-btn {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border: 1px solid rgba(102, 126, 234, 0.3);
+    color: #ffffff;
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.educational-view-btn::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+    transition: left 0.5s;
+}
+
+.educational-view-btn:hover::before {
+    left: 100%;
+}
+
+.educational-view-btn:hover {
+    background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
+    border-color: rgba(118, 75, 162, 0.5);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(102, 126, 234, 0.3);
+}
+
+.educational-view-btn .btn-icon {
+    font-size: 1.1rem;
+    margin-right: 4px;
+    animation: float 2s ease-in-out infinite;
+}
+
+@keyframes float {
+    0%, 100% { transform: translateY(0px); }
+    50% { transform: translateY(-3px); }
+}
+
+/* Mejoras para la tabla de eventos */
+.events-table .event-row {
+    transition: all 0.2s ease;
+}
+
+.events-table .event-row:hover {
+    background: rgba(100, 255, 218, 0.05);
+    transform: scale(1.01);
+}
+
+.event-type-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 8px;
+    background: rgba(100, 255, 218, 0.1);
+    border: 1px solid rgba(100, 255, 218, 0.2);
+    border-radius: 6px;
+    font-size: 0.8rem;
+    font-weight: 500;
+    color: #64ffda;
+}
+
+/* Animación de carga para eventos */
+.event-row {
+    animation: slideInFromRight 0.3s ease-out;
+}
+
+@keyframes slideInFromRight {
+    from {
+        opacity: 0;
+        transform: translateX(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}

@@ -420,8 +420,10 @@ class RustSIEMDashboard {
                 <td>${event.event_type || 'Unknown'}</td>
                 <td class="event-description">${event.description || 'No description available'}</td>
                 <td>
-                    <button class="control-btn small" onclick="dashboard.viewEventDetails('${event.id}')">
-                        <span class="btn-icon">👁️</span>
+                    <button class="control-btn view-btn educational-view-btn" 
+                            onclick="showEventEducationalDetails('${event.id}')" 
+                            title="Ver análisis educativo detallado">
+                        <span class="btn-icon">🎓</span>
                         View
                     </button>
                 </td>
@@ -1985,3 +1987,727 @@ style.textContent = `
     }
 `;
 document.head.appendChild(style);
+
+/**
+ * Detalles educativos del modulo  evento
+ */
+async function showEventEducationalDetails(eventId) {
+    console.log(`🔍 Cargando detalles educativos para evento: ${eventId}`);
+
+    try {
+        showLoadingModal();
+
+        const response = await fetch(`${window.location.origin}/api/events/${eventId}/educational`);
+        const result = await response.json();
+
+        if (result.success && result.data) {
+            renderEducationalModal(result.data);
+        } else {
+            showErrorModal('No se pudieron cargar los detalles educativos del evento');
+        }
+    } catch (error) {
+        console.error('❌ Error cargando detalles educativos:', error);
+        showErrorModal('Error de conexión al cargar detalles del evento');
+    } finally {
+        hideLoadingModal();
+    }
+}
+
+/**
+ * Renderiza el modal educativo completo
+ */
+function renderEducationalModal(eventData) {
+    const modalHtml = `
+        <div class="educational-modal-overlay" id="educational-modal">
+            <div class="educational-modal-container">
+                <div class="educational-modal-header">
+                    <div class="modal-title-section">
+                        <h2 class="modal-title">
+                            <span class="event-icon">${getEventTypeIcon(eventData.event.event_type)}</span>
+                            Análisis Educativo de Evento de Seguridad
+                        </h2>
+                        <div class="event-basic-info">
+                            <span class="event-id">ID: ${eventData.event.id.substring(0, 8)}...</span>
+                            <span class="event-severity severity-${eventData.event.severity.toLowerCase()}">${eventData.event.severity}</span>
+                            <span class="event-timestamp">${new Date(eventData.event.timestamp).toLocaleString()}</span>
+                        </div>
+                    </div>
+                    <button class="modal-close-btn" onclick="closeEducationalModal()">✕</button>
+                </div>
+
+                <div class="educational-modal-content">
+                    <div class="educational-tabs">
+                        <div class="tab-buttons">
+                            <button class="tab-btn active" data-tab="overview">Resumen</button>
+                            <button class="tab-btn" data-tab="educational">Contexto Educativo</button>
+                            <button class="tab-btn" data-tab="technical">Análisis Técnico</button>
+                            <button class="tab-btn" data-tab="threat-intel">Inteligencia de Amenazas</button>
+                            <button class="tab-btn" data-tab="mitigation">Mitigación</button>
+                            <button class="tab-btn" data-tab="examples">Casos Reales</button>
+                        </div>
+
+                        <div class="tab-content">
+                            ${renderOverviewTab(eventData)}
+                            ${renderEducationalTab(eventData)}
+                            ${renderTechnicalTab(eventData)}
+                            ${renderThreatIntelTab(eventData)}
+                            ${renderMitigationTab(eventData)}
+                            ${renderExamplesTab(eventData)}
+                        </div>
+                    </div>
+                </div>
+
+                <div class="educational-modal-footer">
+                    <div class="footer-actions">
+                        <button class="btn-secondary" onclick="exportEventReport('${eventData.event.id}')">
+                            <span class="btn-icon">📄</span>
+                            Exportar Reporte
+                        </button>
+                        <button class="btn-secondary" onclick="addToThreatHunt('${eventData.event.id}')">
+                            <span class="btn-icon">🎯</span>
+                            Añadir a Threat Hunt
+                        </button>
+                        <button class="btn-primary" onclick="closeEducationalModal()">
+                            Entendido
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+
+    // Insertar modal en el DOM
+    document.body.insertAdjacentHTML('beforeend', modalHtml);
+
+    // Configurar eventos de tabs
+    setupEducationalModalTabs();
+
+    // Mostrar modal con animación
+    requestAnimationFrame(() => {
+        document.getElementById('educational-modal').classList.add('show');
+    });
+}
+
+/**
+ * Renderiza la pestaña de resumen
+ */
+function renderOverviewTab(eventData) {
+    return `
+        <div class="tab-panel active" id="overview-panel">
+            <div class="overview-grid">
+                <div class="overview-card event-summary">
+                    <h3>Resumen del Evento</h3>
+                    <div class="event-details">
+                        <div class="detail-row">
+                            <span class="detail-label">Tipo de Ataque:</span>
+                            <span class="detail-value">${eventData.educational_context.attack_name}</span>
+                        </div>
+                        <div class="detail-row">
+                            <span class="detail-label">Fuente:</span>
+                            <span class="detail-value">${eventData.event.source}</span>
+                        </div>
+                        <div class="detail-row">
+                            <span class="detail-label">IP Origen:</span>
+                            <span class="detail-value ip-address">${eventData.event.source_ip || 'Desconocida'}</span>
+                        </div>
+                        <div class="detail-row">
+                            <span class="detail-label">País Origen:</span>
+                            <span class="detail-value">${eventData.threat_intelligence.origin_country}</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="overview-card threat-level">
+                    <h3>Nivel de Amenaza</h3>
+                    <div class="threat-indicator">
+                        <div class="threat-level-badge ${getThreatLevelClass(eventData.threat_intelligence.threat_level)}">
+                            ${eventData.threat_intelligence.threat_level}
+                        </div>
+                        <p class="threat-explanation">
+                            ${eventData.educational_context.attack_description}
+                        </p>
+                    </div>
+                </div>
+
+                <div class="overview-card quick-actions">
+                    <h3>Acciones Inmediatas Recomendadas</h3>
+                    <ul class="quick-actions-list">
+                        ${eventData.mitigation_guidance.immediate_actions.slice(0, 3).map(action => `
+                            <li class="action-item">
+                                <span class="action-priority priority-${action.priority.toLowerCase()}">${action.priority}</span>
+                                <span class="action-text">${action.action}</span>
+                                <span class="action-timeline">(${action.timeline})</span>
+                            </li>
+                        `).join('')}
+                    </ul>
+                </div>
+
+                <div class="overview-card raw-message">
+                    <h3>Mensaje Original del Log</h3>
+                    <div class="code-block">
+                        <pre><code>${eventData.event.raw_message}</code></pre>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+}
+
+/**
+ * Renderiza la pestaña educativa
+ */
+function renderEducationalTab(eventData) {
+    return `
+        <div class="tab-panel" id="educational-panel">
+            <div class="educational-content">
+                <div class="education-section">
+                    <h3>¿Qué es este tipo de ataque?</h3>
+                    <div class="attack-description">
+                        <p>${eventData.educational_context.attack_description}</p>
+                        <div class="difficulty-badge">
+                            Nivel de Dificultad: <span class="difficulty-level">${eventData.educational_context.difficulty_level}</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="education-section">
+                    <h3>Objetivos de Aprendizaje</h3>
+                    <ul class="learning-objectives">
+                        ${eventData.educational_context.learning_objectives.map(objective => `
+                            <li class="objective-item">
+                                <span class="objective-icon">🎯</span>
+                                <span class="objective-text">${objective}</span>
+                            </li>
+                        `).join('')}
+                    </ul>
+                </div>
+
+                <div class="education-section">
+                    <h3>Conceptos Clave</h3>
+                    <div class="key-concepts-grid">
+                        ${eventData.educational_context.key_concepts.map(concept => `
+                            <div class="concept-card">
+                                <span class="concept-icon">💡</span>
+                                <span class="concept-text">${concept}</span>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+
+                <div class="education-section mitre-section">
+                    <h3>Mapeo MITRE ATT&CK</h3>
+                    <div class="mitre-mapping">
+                        <div class="mitre-tactics">
+                            <h4>Tácticas</h4>
+                            <div class="mitre-items">
+                                ${eventData.educational_context.mitre_tactics.map(tactic => `
+                                    <span class="mitre-tag tactic">${tactic}</span>
+                                `).join('')}
+                            </div>
+                        </div>
+                        <div class="mitre-techniques">
+                            <h4>Técnicas</h4>
+                            <div class="mitre-items">
+                                ${eventData.educational_context.mitre_techniques.map(technique => `
+                                    <span class="mitre-tag technique">${technique}</span>
+                                `).join('')}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+}
+
+/**
+ * Renderiza la pestaña de análisis técnico
+ */
+function renderTechnicalTab(eventData) {
+    return `
+        <div class="tab-panel" id="technical-panel">
+            <div class="technical-analysis">
+                <div class="analysis-section">
+                    <h3>Vector de Ataque</h3>
+                    <div class="attack-vector-info">
+                        <p>${eventData.technical_analysis.attack_vector}</p>
+                    </div>
+                </div>
+
+                <div class="analysis-section">
+                    <h3>Análisis del Payload</h3>
+                    <div class="payload-analysis">
+                        <div class="payload-explanation">
+                            <h4>Explicación del Payload</h4>
+                            <p>${eventData.technical_analysis.payload_analysis.payload_explanation}</p>
+                        </div>
+                        
+                        <div class="malicious-indicators">
+                            <h4>Indicadores Maliciosos Detectados</h4>
+                            <ul class="indicators-list">
+                                ${eventData.technical_analysis.payload_analysis.malicious_indicators.map(indicator => `
+                                    <li class="indicator-item">
+                                        <span class="indicator-icon">🚩</span>
+                                        <span class="indicator-text">${indicator}</span>
+                                    </li>
+                                `).join('')}
+                            </ul>
+                        </div>
+
+                        ${eventData.technical_analysis.payload_analysis.obfuscation_techniques.length > 0 ? `
+                            <div class="obfuscation-techniques">
+                                <h4>Técnicas de Ofuscación Detectadas</h4>
+                                <div class="techniques-list">
+                                    ${eventData.technical_analysis.payload_analysis.obfuscation_techniques.map(technique => `
+                                        <span class="technique-badge">${technique}</span>
+                                    `).join('')}
+                                </div>
+                            </div>
+                        ` : ''}
+                    </div>
+                </div>
+
+                ${eventData.technical_analysis.vulnerability_details ? `
+                    <div class="analysis-section">
+                        <h3>Detalles de la Vulnerabilidad</h3>
+                        <div class="vulnerability-info">
+                            ${eventData.technical_analysis.vulnerability_details.cve_id ? `
+                                <div class="vuln-detail">
+                                    <span class="vuln-label">CVE/CWE ID:</span>
+                                    <span class="vuln-value cve-id">${eventData.technical_analysis.vulnerability_details.cve_id}</span>
+                                </div>
+                            ` : ''}
+                            ${eventData.technical_analysis.vulnerability_details.cvss_score ? `
+                                <div class="vuln-detail">
+                                    <span class="vuln-label">CVSS Score:</span>
+                                    <span class="vuln-value cvss-score">${eventData.technical_analysis.vulnerability_details.cvss_score}/10</span>
+                                </div>
+                            ` : ''}
+                            <div class="vuln-detail">
+                                <span class="vuln-label">Descripción:</span>
+                                <span class="vuln-value">${eventData.technical_analysis.vulnerability_details.description}</span>
+                            </div>
+                            <div class="vuln-detail">
+                                <span class="vuln-label">Complejidad de Explotación:</span>
+                                <span class="vuln-value">${eventData.technical_analysis.vulnerability_details.exploit_complexity}</span>
+                            </div>
+                            <div class="vuln-detail">
+                                <span class="vuln-label">Componentes Afectados:</span>
+                                <ul class="affected-components">
+                                    ${eventData.technical_analysis.vulnerability_details.affected_components.map(component => `
+                                        <li>${component}</li>
+                                    `).join('')}
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                ` : ''}
+
+                <div class="analysis-section">
+                    <h3>Indicadores de Compromiso (IoCs)</h3>
+                    <div class="iocs-table">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Tipo</th>
+                                    <th>Valor</th>
+                                    <th>Confianza</th>
+                                    <th>Descripción</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${eventData.technical_analysis.iocs.map(ioc => `
+                                    <tr>
+                                        <td><span class="ioc-type">${ioc.ioc_type}</span></td>
+                                        <td><code class="ioc-value">${ioc.value}</code></td>
+                                        <td><span class="confidence-badge confidence-${ioc.confidence.toLowerCase()}">${ioc.confidence}</span></td>
+                                        <td>${ioc.description}</td>
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="analysis-section">
+                    <h3>Reglas de Detección Activadas</h3>
+                    <div class="detection-rules">
+                        ${eventData.technical_analysis.detection_rules.map(rule => `
+                            <div class="rule-card">
+                                <div class="rule-header">
+                                    <span class="rule-name">${rule.rule_name}</span>
+                                    <span class="confidence-score">${Math.round(rule.confidence * 100)}% confianza</span>
+                                </div>
+                                <div class="rule-description">${rule.description}</div>
+                                <div class="rule-fp-rate">Tasa de falsos positivos: ${rule.false_positive_rate}</div>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+}
+
+/**
+ * Renderiza la pestaña de inteligencia de amenazas
+ */
+function renderThreatIntelTab(eventData) {
+    return `
+        <div class="tab-panel" id="threat-intel-panel">
+            <div class="threat-intel-content">
+                <div class="intel-section geographic-context">
+                    <h3>Contexto Geográfico</h3>
+                    <div class="geo-info">
+                        <div class="country-info">
+                            <div class="country-header">
+                                <span class="country-name">${eventData.threat_intelligence.geographic_context.country}</span>
+                                <span class="country-code">(${eventData.threat_intelligence.geographic_context.country_code})</span>
+                            </div>
+                            <div class="risk-assessment">
+                                <span class="risk-label">Evaluación de Riesgo:</span>
+                                <p class="risk-description">${eventData.threat_intelligence.geographic_context.risk_assessment}</p>
+                            </div>
+                        </div>
+                        
+                        <div class="threat-types">
+                            <h4>Tipos de Ataques Típicos desde esta Región</h4>
+                            <div class="attack-types-grid">
+                                ${eventData.threat_intelligence.geographic_context.typical_attack_types.map(type => `
+                                    <span class="attack-type-badge">${type}</span>
+                                `).join('')}
+                            </div>
+                        </div>
+
+                        <div class="apt-groups">
+                            <h4>Grupos APT Conocidos</h4>
+                            <div class="apt-groups-list">
+                                ${eventData.threat_intelligence.geographic_context.known_apt_groups.map(group => `
+                                    <div class="apt-group-card">
+                                        <span class="apt-group-name">${group}</span>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="intel-section common-patterns">
+                    <h3>Patrones de Ataque Comunes</h3>
+                    <div class="patterns-list">
+                        ${eventData.threat_intelligence.common_attack_patterns.map(pattern => `
+                            <div class="pattern-card">
+                                <span class="pattern-icon">🔍</span>
+                                <span class="pattern-text">${pattern}</span>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+}
+
+/**
+ * Renderiza la pestaña de mitigación
+ */
+function renderMitigationTab(eventData) {
+    return `
+        <div class="tab-panel" id="mitigation-panel">
+            <div class="mitigation-content">
+                <div class="mitigation-section immediate">
+                    <h3><span class="section-icon">🚨</span> Acciones Inmediatas</h3>
+                    <div class="actions-grid">
+                        ${eventData.mitigation_guidance.immediate_actions.map(action => `
+                            <div class="action-card priority-${action.priority.toLowerCase()}">
+                                <div class="action-header">
+                                    <span class="action-priority">${action.priority}</span>
+                                    <span class="action-timeline">${action.timeline}</span>
+                                </div>
+                                <div class="action-description">${action.action}</div>
+                                <div class="action-tools">
+                                    <span class="tools-label">Herramientas necesarias:</span>
+                                    <div class="tools-list">
+                                        ${action.tools_required.map(tool => `
+                                            <span class="tool-badge">${tool}</span>
+                                        `).join('')}
+                                    </div>
+                                </div>
+                                <div class="expected-outcome">
+                                    <span class="outcome-label">Resultado esperado:</span>
+                                    <span class="outcome-text">${action.expected_outcome}</span>
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+
+                <div class="mitigation-section preventive">
+                    <h3><span class="section-icon">🛡️</span> Medidas Preventivas</h3>
+                    <div class="actions-grid">
+                        ${eventData.mitigation_guidance.preventive_measures.map(action => `
+                            <div class="action-card">
+                                <div class="action-header">
+                                    <span class="action-priority">${action.priority}</span>
+                                    <span class="action-timeline">${action.timeline}</span>
+                                </div>
+                                <div class="action-description">${action.action}</div>
+                                <div class="action-tools">
+                                    <span class="tools-label">Herramientas necesarias:</span>
+                                    <div class="tools-list">
+                                        ${action.tools_required.map(tool => `
+                                            <span class="tool-badge">${tool}</span>
+                                        `).join('')}
+                                    </div>
+                                </div>
+                                <div class="expected-outcome">
+                                    <span class="outcome-label">Resultado esperado:</span>
+                                    <span class="outcome-text">${action.expected_outcome}</span>
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+
+                <div class="mitigation-section long-term">
+                    <h3><span class="section-icon">📈</span> Estrategias a Largo Plazo</h3>
+                    <div class="actions-grid">
+                        ${eventData.mitigation_guidance.long_term_strategies.map(action => `
+                            <div class="action-card">
+                                <div class="action-header">
+                                    <span class="action-priority">${action.priority}</span>
+                                    <span class="action-timeline">${action.timeline}</span>
+                                </div>
+                                <div class="action-description">${action.action}</div>
+                                <div class="action-tools">
+                                    <span class="tools-label">Herramientas necesarias:</span>
+                                    <div class="tools-list">
+                                        ${action.tools_required.map(tool => `
+                                            <span class="tool-badge">${tool}</span>
+                                        `).join('')}
+                                    </div>
+                                </div>
+                                <div class="expected-outcome">
+                                    <span class="outcome-label">Resultado esperado:</span>
+                                    <span class="outcome-text">${action.expected_outcome}</span>
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+}
+
+/**
+ * Renderiza la pestaña de ejemplos reales
+ */
+function renderExamplesTab(eventData) {
+    if (!eventData.real_world_examples || eventData.real_world_examples.length === 0) {
+        return `
+            <div class="tab-panel" id="examples-panel">
+                <div class="no-examples">
+                    <span class="no-examples-icon">📚</span>
+                    <p>No hay ejemplos del mundo real disponibles para este tipo de evento.</p>
+                </div>
+            </div>
+        `;
+    }
+
+    return `
+        <div class="tab-panel" id="examples-panel">
+            <div class="examples-content">
+                <div class="examples-intro">
+                    <h3>Casos Reales Históricos</h3>
+                    <p>Estos son ejemplos reales de incidentes similares que han ocurrido en organizaciones. Estudiar estos casos ayuda a entender el impacto real y las lecciones aprendidas.</p>
+                </div>
+                
+                <div class="examples-grid">
+                    ${eventData.real_world_examples.map(example => `
+                        <div class="example-card">
+                            <div class="example-header">
+                                <h4 class="incident-name">${example.incident_name}</h4>
+                                <span class="incident-year">${example.year}</span>
+                            </div>
+                            
+                            <div class="example-content">
+                                <div class="example-detail">
+                                    <span class="detail-label">Organización Afectada:</span>
+                                    <span class="detail-value">${example.organization}</span>
+                                </div>
+                                
+                                <div class="example-detail">
+                                    <span class="detail-label">Impacto:</span>
+                                    <p class="impact-description">${example.impact}</p>
+                                </div>
+                                
+                                <div class="example-detail">
+                                    <span class="detail-label">Lecciones Aprendidas:</span>
+                                    <p class="lessons-learned">${example.lessons_learned}</p>
+                                </div>
+                                
+                                <div class="example-detail">
+                                    <span class="detail-label">Método de Prevención:</span>
+                                    <p class="prevention-method">${example.prevention_method}</p>
+                                </div>
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>
+            </div>
+        </div>
+    `;
+}
+
+/**
+ * Configura los eventos de las pestañas del modal educativo
+ */
+function setupEducationalModalTabs() {
+    const tabButtons = document.querySelectorAll('.tab-btn');
+    const tabPanels = document.querySelectorAll('.tab-panel');
+
+    tabButtons.forEach(button => {
+        button.addEventListener('click', () => {
+            const tabId = button.getAttribute('data-tab');
+
+            // Remover clase active de todos los botones y paneles
+            tabButtons.forEach(btn => btn.classList.remove('active'));
+            tabPanels.forEach(panel => panel.classList.remove('active'));
+
+            // Añadir clase active al botón y panel seleccionado
+            button.classList.add('active');
+            document.getElementById(`${tabId}-panel`).classList.add('active');
+        });
+    });
+}
+
+/**
+ * Cierra el modal educativo
+ */
+function closeEducationalModal() {
+    const modal = document.getElementById('educational-modal');
+    if (modal) {
+        modal.classList.remove('show');
+        setTimeout(() => {
+            modal.remove();
+        }, 300);
+    }
+}
+
+/**
+ * Obtiene el icono correspondiente al tipo de evento
+ */
+function getEventTypeIcon(eventType) {
+    const icons = {
+        'SqlInjection': '💉',
+        'XssAttempt': '🔗',
+        'BruteForce': '🔨',
+        'Anomaly': '📊',
+        'SuspiciousActivity': '⚠️',
+        'Normal': 'ℹ️'
+    };
+    return icons[eventType] || '🔍';
+}
+
+// Helper para formatear el tipo de evento a un texto amigable
+function formatEventType(eventType) {
+    const typeMap = {
+        'SqlInjection': 'SQL Injection',
+        'XssAttempt': 'XSS Attempt', 
+        'BruteForce': 'Brute Force',
+        'Anomaly': 'Anomaly',
+        'SuspiciousActivity': 'Suspicious Activity',
+        'Normal': 'Normal'
+    };
+    return typeMap[eventType] || eventType;
+}
+
+/**
+ * Obtiene la clase CSS para el nivel de amenaza
+ */
+function getThreatLevelClass(threatLevel) {
+    const levelMap = {
+        'Muy Alto': 'very-high',
+        'Alto': 'high',
+        'Medio': 'medium',
+        'Bajo': 'low'
+    };
+
+    for (const [key, value] of Object.entries(levelMap)) {
+        if (threatLevel.includes(key)) {
+            return `threat-level-${value}`;
+        }
+    }
+    return 'threat-level-medium';
+}
+
+/**
+ * Muestra modal de loading
+ */
+function showLoadingModal() {
+    const loadingHtml = `
+        <div class="loading-modal-overlay" id="loading-modal">
+            <div class="loading-modal-content">
+                <div class="loading-spinner"></div>
+                <p>Cargando análisis educativo...</p>
+            </div>
+        </div>
+    `;
+    document.body.insertAdjacentHTML('beforeend', loadingHtml);
+}
+
+/**
+ * Oculta modal de loading
+ */
+function hideLoadingModal() {
+    const modal = document.getElementById('loading-modal');
+    if (modal) {
+        modal.remove();
+    }
+}
+
+/**
+ * Muestra modal de error
+ */
+function showErrorModal(message) {
+    const errorHtml = `
+        <div class="error-modal-overlay" id="error-modal">
+            <div class="error-modal-content">
+                <div class="error-icon">⚠️</div>
+                <h3>Error</h3>
+                <p>${message}</p>
+                <button class="btn-primary" onclick="closeErrorModal()">Entendido</button>
+            </div>
+        </div>
+    `;
+    document.body.insertAdjacentHTML('beforeend', errorHtml);
+}
+
+/**
+ * Cierra modal de error
+ */
+function closeErrorModal() {
+    const modal = document.getElementById('error-modal');
+    if (modal) {
+        modal.remove();
+    }
+}
+
+/**
+ * Exporta reporte del evento (placeholder)
+ */
+function exportEventReport(eventId) {
+    console.log(`📄 Exportando reporte para evento: ${eventId}`);
+    // TODO: Implementar exportación real
+    alert('Funcionalidad de exportación en desarrollo');
+}
+
+/**
+ * Añade evento a threat hunt (placeholder)
+ */
+function addToThreatHunt(eventId) {
+    console.log(`🎯 Añadiendo evento ${eventId} a threat hunt`);
+    // TODO: Implementar añadir a threat hunt
+    alert('Funcionalidad de threat hunting en desarrollo');
+}

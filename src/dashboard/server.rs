@@ -5,6 +5,7 @@ use warp::Filter;
 use serde::{Deserialize, Serialize};
 use chrono::{DateTime, Utc};
 
+
 #[derive(Clone)]
 pub struct DashboardServer {
     storage: Arc<StorageManager>,
@@ -188,6 +189,44 @@ impl DashboardServer {
                 warp::reply::json(&response)
             });
 
+        // API endpoint para detalles educacionales de eventos
+        let event_educational_details = warp::path("api")
+            .and(warp::path("events"))
+            .and(warp::path::param::<String>())
+            .and(warp::path("educational"))
+            .and(warp::get())
+            .map(|event_id: String| {
+                let response = ApiResponse {
+                    success: true,
+                    data: serde_json::json!({
+                        "event_id": event_id,
+                        "educational_content": {
+                            "attack_type": "SQL Injection",
+                            "description": "Una inyección SQL es un tipo de ataque que permite a un atacante interferir con las consultas que una aplicación hace a su base de datos.",
+                            "impact": "Los atacantes pueden ver datos no autorizados, modificar o eliminar datos, y en algunos casos obtener acceso administrativo.",
+                            "prevention": [
+                                "Usar consultas preparadas (prepared statements)",
+                                "Validar y escapar entrada del usuario",
+                                "Implementar principio de menor privilegio",
+                                "Usar stored procedures seguros"
+                            ],
+                            "references": [
+                                "https://owasp.org/www-community/attacks/SQL_Injection",
+                                "https://cwe.mitre.org/data/definitions/89.html"
+                            ],
+                            "severity_explanation": "Este evento es clasificado como 'alto' porque representa un intento directo de compromiso de la base de datos.",
+                            "indicators": [
+                                "Uso de caracteres especiales SQL como ' OR 1=1",
+                                "Intentos de comentarios SQL (-- /* */)",
+                                "Palabras clave SQL en parámetros de entrada"
+                            ]
+                        }
+                    }),
+                    message: None,
+                };
+                warp::reply::json(&response)
+            });
+
         // Página principal del dashboard - servir el index.html actualizado
         let index = warp::path::end()
             .and(warp::get())
@@ -257,6 +296,7 @@ impl DashboardServer {
             .or(stats)
             .or(events)
             .or(event_details)
+            .or(event_educational_details)
             .or(alerts)
             .or(ws_events)
             .with(cors)

@@ -1993,16 +1993,22 @@ document.head.appendChild(style);
  */
 async function showEventEducationalDetails(eventId) {
     console.log(`🔍 Cargando detalles educativos para evento: ${eventId}`);
+    console.log(`🌐 URL: ${window.location.origin}/api/events/${eventId}/educational`);
 
     try {
         showLoadingModal();
 
         const response = await fetch(`${window.location.origin}/api/events/${eventId}/educational`);
+        console.log(`📡 Response status: ${response.status}`);
+        
         const result = await response.json();
+        console.log(`📦 Response data:`, result);
 
         if (result.success && result.data) {
+            console.log(`✅ Rendering modal con data:`, result.data);
             renderEducationalModal(result.data);
         } else {
+            console.error(`❌ API Error: success=${result.success}, data=${result.data}`);
             showErrorModal('No se pudieron cargar los detalles educativos del evento');
         }
     } catch (error) {
@@ -2017,6 +2023,8 @@ async function showEventEducationalDetails(eventId) {
  * Renderiza el modal educativo completo
  */
 function renderEducationalModal(eventData) {
+    console.log(`🎨 Renderizando modal educativo con eventData:`, eventData);
+    
     const modalHtml = `
         <div class="educational-modal-overlay" id="educational-modal">
             <div class="educational-modal-container">
@@ -2078,13 +2086,21 @@ function renderEducationalModal(eventData) {
 
     // Insertar modal en el DOM
     document.body.insertAdjacentHTML('beforeend', modalHtml);
+    console.log(`📝 Modal HTML insertado en el DOM`);
 
     // Configurar eventos de tabs
     setupEducationalModalTabs();
+    console.log(`⚙️ Tabs configurados`);
 
     // Mostrar modal con animación
     requestAnimationFrame(() => {
-        document.getElementById('educational-modal').classList.add('show');
+        const modal = document.getElementById('educational-modal');
+        if (modal) {
+            modal.classList.add('show');
+            console.log(`✨ Modal mostrado con clase 'show'`);
+        } else {
+            console.error(`❌ No se encontró el modal con ID 'educational-modal'`);
+        }
     });
 }
 
@@ -2601,10 +2617,15 @@ function closeEducationalModal() {
 function getEventTypeIcon(eventType) {
     const icons = {
         'SqlInjection': '💉',
+        'SQL Injection': '💉',
         'XssAttempt': '🔗',
+        'XSS Attack': '🔗',
         'BruteForce': '🔨',
+        'Brute Force': '🔨',
         'Anomaly': '📊',
         'SuspiciousActivity': '⚠️',
+        'HTTP Request': '🌐',
+        'Network Connection': '🔗',
         'Normal': 'ℹ️'
     };
     return icons[eventType] || '🔍';

@@ -189,41 +189,54 @@ impl DashboardServer {
                 warp::reply::json(&response)
             });
 
-        // API endpoint para detalles educacionales de eventos
+        // API endpoint educativo para detalles extendidos del evento
         let event_educational_details = warp::path("api")
             .and(warp::path("events"))
             .and(warp::path::param::<String>())
             .and(warp::path("educational"))
             .and(warp::get())
             .map(|event_id: String| {
-                let response = ApiResponse {
-                    success: true,
-                    data: serde_json::json!({
-                        "event_id": event_id,
-                        "educational_content": {
-                            "attack_type": "SQL Injection",
-                            "description": "Una inyección SQL es un tipo de ataque que permite a un atacante interferir con las consultas que una aplicación hace a su base de datos.",
-                            "impact": "Los atacantes pueden ver datos no autorizados, modificar o eliminar datos, y en algunos casos obtener acceso administrativo.",
-                            "prevention": [
-                                "Usar consultas preparadas (prepared statements)",
-                                "Validar y escapar entrada del usuario",
-                                "Implementar principio de menor privilegio",
-                                "Usar stored procedures seguros"
-                            ],
-                            "references": [
-                                "https://owasp.org/www-community/attacks/SQL_Injection",
-                                "https://cwe.mitre.org/data/definitions/89.html"
-                            ],
-                            "severity_explanation": "Este evento es clasificado como 'alto' porque representa un intento directo de compromiso de la base de datos.",
-                            "indicators": [
-                                "Uso de caracteres especiales SQL como ' OR 1=1",
-                                "Intentos de comentarios SQL (-- /* */)",
-                                "Palabras clave SQL en parámetros de entrada"
-                            ]
-                        }
-                    }),
-                    message: None,
-                };
+                // Extraer el número del event_id (ej: "event-1" -> 1)
+                let event_number: usize = event_id
+                    .strip_prefix("event-")
+                    .and_then(|s| s.parse().ok())
+                    .unwrap_or(1);
+                
+                // Usar los MISMOS datos que el endpoint general de eventos
+                let i = event_number - 1; // Convertir a índice (0-based)
+                let severities = ["critical", "high", "medium", "low", "info"];
+                let sources = ["Apache", "Nginx", "SSH", "MySQL", "Firewall"];
+                let event_types = ["HTTP Request", "Login Attempt", "File Access", "SQL Query", "Network Connection"];
+                
+                let now = chrono::Utc::now();
+                let timestamp = now - chrono::Duration::minutes(i as i64 * 5);
+                
+                let severity = severities[i % severities.len()];
+                let source = sources[i % sources.len()];
+                let event_type = event_types[i % event_types.len()];
+                let source_ip = format!("192.168.{}.{}", (i % 255) + 1, ((i * 7) % 255) + 1);
+
+                let data = serde_json::json!({
+                    "event": {
+                        "id": event_id,
+                        "timestamp": timestamp.to_rfc3339(),
+                        "severity": severity,
+                        "source": source,
+                        "event_type": event_type,
+                        "description": format!("Simulated security event #{}", event_number),
+                        "source_ip": source_ip,
+                        "raw_message": format!("{} - - [27/Aug/2025:19:30:00 +0000] \"GET /api/endpoint HTTP/1.1\" 200 - \"Mozilla/5.0\"", source_ip)
+                    },
+                    "educational_context": Self::get_educational_context_for_event_type(event_type),
+                    "technical_analysis": Self::get_technical_analysis_for_event_type(event_type, &source_ip),
+                    "threat_intelligence": Self::get_threat_intelligence_for_event_type(event_type, severity),
+                    "mitigation_guidance": Self::get_mitigation_guidance_for_event_type(event_type, severity),
+                    "real_world_examples": [
+                        {"title": "Brecha por SQLi en empresa X", "description": "Inyección SQL permitió acceso a datos sensibles.", "year": 2017, "impact": "Datos de clientes expuestos", "organization": "Empresa X", "source_url": "https://example.com/caso-sqli"}
+                    ]
+                });
+
+                let response = ApiResponse { success: true, data, message: None };
                 warp::reply::json(&response)
             });
 
@@ -287,16 +300,16 @@ impl DashboardServer {
             .allow_headers(vec!["content-type", "authorization"])
             .allow_methods(vec!["GET", "POST", "PUT", "DELETE", "OPTIONS"]);
 
-        // Combinar todas las rutas
+        // Combinar todas las rutas (las más específicas primero)
         let routes = index
             .or(events_page)
             .or(alerts_page)
             .or(static_files)
             .or(favicon)
             .or(stats)
-            .or(events)
+            .or(event_educational_details)  // Mover antes de events y event_details
             .or(event_details)
-            .or(event_educational_details)
+            .or(events)
             .or(alerts)
             .or(ws_events)
             .with(cors)
@@ -489,4 +502,498 @@ fn get_fallback_html() -> String {
     </body>
     </html>
     "#.to_string()
+}
+
+impl DashboardServer {
+    /// Genera contexto educativo específico para cada tipo de evento
+    fn get_educational_context_for_event_type(event_type: &str) -> serde_json::Value {
+        match event_type {
+            "HTTP Request" => serde_json::json!({
+                "attack_name": "Solicitud HTTP Sospechosa",
+                "attack_description": "Una solicitud HTTP es la forma en que un navegador web o aplicación se comunica con un servidor. Si bien las solicitudes HTTP normales son legítimas, pueden ser utilizadas por atacantes para explotar vulnerabilidades web.",
+                "difficulty_level": "Básico",
+                "learning_objectives": [
+                    "Identificar patrones anómalos en solicitudes HTTP",
+                    "Comprender los componentes de una solicitud HTTP",
+                    "Reconocer indicadores de ataques web comunes"
+                ],
+                "key_concepts": [
+                    "Métodos HTTP (GET, POST, PUT, DELETE)",
+                    "Headers HTTP y User-Agents",
+                    "Parámetros y payload de solicitudes"
+                ],
+                "mitre_tactics": ["Initial Access", "Discovery"],
+                "mitre_techniques": ["T1190 Exploit Public-Facing Application", "T1595 Active Scanning"]
+            }),
+            
+            "Login Attempt" => serde_json::json!({
+                "attack_name": "Intento de Inicio de Sesión",
+                "attack_description": "Los intentos de inicio de sesión son normales en cualquier sistema, pero múltiples intentos fallidos pueden indicar un ataque de fuerza bruta donde el atacante intenta adivinar credenciales válidas.",
+                "difficulty_level": "Intermedio",
+                "learning_objectives": [
+                    "Detectar patrones de fuerza bruta",
+                    "Implementar controles de tasa de intentos",
+                    "Configurar alertas de seguridad apropiadas"
+                ],
+                "key_concepts": [
+                    "Autenticación y autorización",
+                    "Análisis de patrones temporales",
+                    "Gestión de credenciales"
+                ],
+                "mitre_tactics": ["Credential Access", "Initial Access"],
+                "mitre_techniques": ["T1110 Brute Force", "T1078 Valid Accounts"]
+            }),
+
+            "File Access" => serde_json::json!({
+                "attack_name": "Acceso a Archivos",
+                "attack_description": "El acceso a archivos es una operación normal, pero puede indicar intentos de acceso no autorizado, escalamiento de privilegios o exfiltración de datos cuando ocurre en archivos sensibles.",
+                "difficulty_level": "Intermedio",
+                "learning_objectives": [
+                    "Monitorear accesos a archivos críticos",
+                    "Implementar controles de acceso granulares",
+                    "Detectar patrones de exfiltración"
+                ],
+                "key_concepts": [
+                    "Permisos de archivos y directorios",
+                    "Auditoría de acceso",
+                    "Principio de menor privilegio"
+                ],
+                "mitre_tactics": ["Collection", "Exfiltration"],
+                "mitre_techniques": ["T1005 Data from Local System", "T1083 File and Directory Discovery"]
+            }),
+
+            "SQL Query" => serde_json::json!({
+                "attack_name": "Consulta SQL",
+                "attack_description": "Las consultas SQL son normales en aplicaciones que usan bases de datos, pero pueden ser explotadas mediante inyección SQL para acceder a datos no autorizados o manipular la base de datos.",
+                "difficulty_level": "Avanzado",
+                "learning_objectives": [
+                    "Identificar patrones de inyección SQL",
+                    "Implementar consultas preparadas",
+                    "Configurar logging de consultas sospechosas"
+                ],
+                "key_concepts": [
+                    "Sanitización de entrada",
+                    "Prepared statements",
+                    "Principios de least privilege en DB"
+                ],
+                "mitre_tactics": ["Initial Access", "Discovery"],
+                "mitre_techniques": ["T1190 Exploit Public-Facing Application", "T1213 Data from Information Repositories"]
+            }),
+
+            "Network Connection" => serde_json::json!({
+                "attack_name": "Conexión de Red",
+                "attack_description": "Las conexiones de red son fundamentales para la comunicación, pero conexiones no autorizadas pueden indicar malware, comando y control (C2), o intentos de acceso no autorizado.",
+                "difficulty_level": "Intermedio",
+                "learning_objectives": [
+                    "Monitorear conexiones salientes inusuales",
+                    "Identificar tráfico de comando y control",
+                    "Implementar segmentación de red"
+                ],
+                "key_concepts": [
+                    "Análisis de tráfico de red",
+                    "Firewalls y segmentación",
+                    "Detección de beaconing"
+                ],
+                "mitre_tactics": ["Command and Control", "Exfiltration"],
+                "mitre_techniques": ["T1071 Application Layer Protocol", "T1041 Exfiltration Over C2 Channel"]
+            }),
+
+            _ => serde_json::json!({
+                "attack_name": event_type,
+                "attack_description": "Evento de seguridad detectado en el sistema que requiere análisis para determinar su naturaleza y nivel de riesgo.",
+                "difficulty_level": "Intermedio",
+                "learning_objectives": [
+                    "Analizar el contexto del evento",
+                    "Evaluar el nivel de riesgo",
+                    "Implementar contramedidas apropiadas"
+                ],
+                "key_concepts": [
+                    "Análisis de logs",
+                    "Correlación de eventos",
+                    "Respuesta a incidentes"
+                ],
+                "mitre_tactics": ["Discovery", "Collection"],
+                "mitre_techniques": ["T1083 File and Directory Discovery", "T1005 Data from Local System"]
+            })
+        }
+    }
+
+    /// Genera análisis técnico específico para cada tipo de evento
+    fn get_technical_analysis_for_event_type(event_type: &str, source_ip: &str) -> serde_json::Value {
+        match event_type {
+            "HTTP Request" => serde_json::json!({
+                "attack_vector": "Solicitud HTTP potencialmente maliciosa a través de navegador web o herramientas automatizadas",
+                "payload_analysis": {
+                    "payload_explanation": "La solicitud HTTP puede contener parámetros maliciosos, headers manipulados o patrones de reconocimiento.",
+                    "malicious_indicators": [
+                        "Patrones de inyección en parámetros",
+                        "User-Agents anómalos o automatizados",
+                        "Headers de solicitud inusuales"
+                    ],
+                    "obfuscation_techniques": ["URL encoding", "Double encoding", "Unicode normalization"]
+                },
+                "vulnerability_details": {
+                    "cve_id": "CWE-20",
+                    "cvss_score": 6.5,
+                    "description": "Validación inadecuada de entrada en aplicación web",
+                    "exploit_complexity": "Media",
+                    "affected_components": ["Aplicación web", "Servidor HTTP"]
+                },
+                "iocs": [
+                    {"ioc_type": "IP", "value": source_ip, "confidence": "Medium", "description": "Origen de solicitud HTTP sospechosa"},
+                    {"ioc_type": "URL", "value": "/api/endpoint", "confidence": "Low", "description": "Endpoint accedido"}
+                ],
+                "detection_rules": [
+                    {"rule_name": "Suspicious HTTP Pattern", "description": "Detecta patrones HTTP anómalos", "confidence": 0.75, "false_positive_rate": "Media"},
+                    {"rule_name": "Web Scanner Detection", "description": "Identifica herramientas de escaneo web", "confidence": 0.68, "false_positive_rate": "Baja"}
+                ]
+            }),
+
+            "Login Attempt" => serde_json::json!({
+                "attack_vector": "Intento de autenticación a través de formularios web o APIs",
+                "payload_analysis": {
+                    "payload_explanation": "Credenciales proporcionadas para autenticación que pueden ser parte de un ataque de fuerza bruta.",
+                    "malicious_indicators": [
+                        "Múltiples intentos fallidos",
+                        "Patrones de nombres de usuario comunes",
+                        "Velocidad de intentos anormalmente alta"
+                    ],
+                    "obfuscation_techniques": ["Credential stuffing", "Password spraying", "Rate limiting evasion"]
+                },
+                "vulnerability_details": {
+                    "cve_id": "CWE-307",
+                    "cvss_score": 5.3,
+                    "description": "Ausencia de protección contra fuerza bruta",
+                    "exploit_complexity": "Baja",
+                    "affected_components": ["Sistema de autenticación", "Base de datos de usuarios"]
+                },
+                "iocs": [
+                    {"ioc_type": "IP", "value": source_ip, "confidence": "High", "description": "Origen de múltiples intentos de login"},
+                    {"ioc_type": "Pattern", "value": "failed_login", "confidence": "High", "description": "Patrón de intentos fallidos"}
+                ],
+                "detection_rules": [
+                    {"rule_name": "Brute Force Detection", "description": "Detecta múltiples intentos de login", "confidence": 0.85, "false_positive_rate": "Baja"},
+                    {"rule_name": "Credential Stuffing", "description": "Identifica uso de credenciales comprometidas", "confidence": 0.72, "false_positive_rate": "Media"}
+                ]
+            }),
+
+            "File Access" => serde_json::json!({
+                "attack_vector": "Acceso a sistema de archivos a través de aplicación o protocolo de red",
+                "payload_analysis": {
+                    "payload_explanation": "Operación de lectura/escritura en archivos que puede indicar exfiltración o modificación no autorizada.",
+                    "malicious_indicators": [
+                        "Acceso a archivos sensibles",
+                        "Patrones de traversal de directorios",
+                        "Operaciones de archivos masivas"
+                    ],
+                    "obfuscation_techniques": ["Path traversal", "Symlink exploitation", "NTFS alternate data streams"]
+                },
+                "vulnerability_details": {
+                    "cve_id": "CWE-22",
+                    "cvss_score": 7.2,
+                    "description": "Traversal de rutas permite acceso no autorizado a archivos",
+                    "exploit_complexity": "Media",
+                    "affected_components": ["Sistema de archivos", "Controles de acceso"]
+                },
+                "iocs": [
+                    {"ioc_type": "IP", "value": source_ip, "confidence": "Medium", "description": "Origen de acceso a archivos"},
+                    {"ioc_type": "File", "value": "/sensitive/data", "confidence": "High", "description": "Archivo sensible accedido"}
+                ],
+                "detection_rules": [
+                    {"rule_name": "File Access Monitoring", "description": "Monitorea acceso a archivos críticos", "confidence": 0.78, "false_positive_rate": "Media"},
+                    {"rule_name": "Directory Traversal", "description": "Detecta intentos de traversal", "confidence": 0.82, "false_positive_rate": "Baja"}
+                ]
+            }),
+
+            "SQL Query" => serde_json::json!({
+                "attack_vector": "Consulta a base de datos a través de aplicación web o acceso directo",
+                "payload_analysis": {
+                    "payload_explanation": "Consulta SQL que puede contener código malicioso para extraer o manipular datos de la base de datos.",
+                    "malicious_indicators": [
+                        "Uso de UNION SELECT",
+                        "Comentarios SQL (-- o /*)",
+                        "Funciones del sistema de DB"
+                    ],
+                    "obfuscation_techniques": ["SQL encoding", "Case alternation", "Whitespace manipulation"]
+                },
+                "vulnerability_details": {
+                    "cve_id": "CWE-89",
+                    "cvss_score": 9.1,
+                    "description": "Inyección SQL permite manipulación de base de datos",
+                    "exploit_complexity": "Baja",
+                    "affected_components": ["Base de datos", "Capa de aplicación"]
+                },
+                "iocs": [
+                    {"ioc_type": "IP", "value": source_ip, "confidence": "High", "description": "Origen de inyección SQL"},
+                    {"ioc_type": "Query", "value": "UNION SELECT", "confidence": "High", "description": "Patrón de inyección detectado"}
+                ],
+                "detection_rules": [
+                    {"rule_name": "SQL Injection Detection", "description": "Detecta patrones de inyección SQL", "confidence": 0.92, "false_positive_rate": "Baja"},
+                    {"rule_name": "Database Enumeration", "description": "Identifica intentos de enumeración", "confidence": 0.76, "false_positive_rate": "Media"}
+                ]
+            }),
+
+            "Network Connection" => serde_json::json!({
+                "attack_vector": "Conexión de red entrante o saliente no autorizada",
+                "payload_analysis": {
+                    "payload_explanation": "Tráfico de red que puede indicar comunicación con servidores de comando y control o exfiltración de datos.",
+                    "malicious_indicators": [
+                        "Conexiones a IPs sospechosas",
+                        "Tráfico cifrado inusual",
+                        "Patrones de beaconing regulares"
+                    ],
+                    "obfuscation_techniques": ["Domain fronting", "DNS tunneling", "Traffic encryption"]
+                },
+                "vulnerability_details": {
+                    "cve_id": "CWE-200",
+                    "cvss_score": 6.8,
+                    "description": "Exposición de información a través de conexiones no controladas",
+                    "exploit_complexity": "Media",
+                    "affected_components": ["Firewall", "Segmentación de red"]
+                },
+                "iocs": [
+                    {"ioc_type": "IP", "value": source_ip, "confidence": "High", "description": "IP de origen de conexión sospechosa"},
+                    {"ioc_type": "Domain", "value": "suspicious-domain.com", "confidence": "Medium", "description": "Dominio de destino sospechoso"}
+                ],
+                "detection_rules": [
+                    {"rule_name": "Suspicious Network Connection", "description": "Detecta conexiones anómalas", "confidence": 0.73, "false_positive_rate": "Media"},
+                    {"rule_name": "C2 Beaconing", "description": "Identifica patrones de beaconing", "confidence": 0.81, "false_positive_rate": "Baja"}
+                ]
+            }),
+
+            _ => serde_json::json!({
+                "attack_vector": "Vector de ataque no clasificado que requiere análisis manual",
+                "payload_analysis": {
+                    "payload_explanation": "El evento detectado contiene indicadores que requieren análisis para determinar su naturaleza maliciosa.",
+                    "malicious_indicators": [
+                        "Comportamiento anómalo detectado",
+                        "Patrón no reconocido",
+                        "Actividad fuera de horarios normales"
+                    ],
+                    "obfuscation_techniques": ["Técnicas no identificadas"]
+                },
+                "vulnerability_details": {
+                    "cve_id": "CWE-200",
+                    "cvss_score": 5.0,
+                    "description": "Evento de seguridad que requiere clasificación",
+                    "exploit_complexity": "Desconocida",
+                    "affected_components": ["Sistema general"]
+                },
+                "iocs": [
+                    {"ioc_type": "IP", "value": source_ip, "confidence": "Medium", "description": "Origen del evento"}
+                ],
+                "detection_rules": [
+                    {"rule_name": "Generic Event Detection", "description": "Detecta eventos no clasificados", "confidence": 0.60, "false_positive_rate": "Alta"}
+                ]
+            })
+        }
+    }
+
+    /// Genera inteligencia de amenazas específica para cada tipo de evento
+    fn get_threat_intelligence_for_event_type(event_type: &str, severity: &str) -> serde_json::Value {
+        let threat_level = match severity {
+            "critical" => "CRITICAL",
+            "high" => "HIGH", 
+            "medium" => "MEDIUM",
+            "low" => "LOW",
+            _ => "INFO"
+        };
+
+        match event_type {
+            "HTTP Request" => serde_json::json!({
+                "threat_level": threat_level,
+                "origin_country": "Global",
+                "common_attack_patterns": [
+                    "Escaneo de vulnerabilidades web",
+                    "Reconocimiento de aplicaciones",
+                    "Ataques automatizados"
+                ],
+                "geographic_context": {
+                    "country": "Global",
+                    "country_code": "GL",
+                    "risk_assessment": "Actividad común de reconocimiento web observada globalmente",
+                    "typical_attack_types": ["Web Scanning", "Directory Brute Force", "Technology Detection"],
+                    "known_apt_groups": ["Script Kiddies", "Automated Scanners"]
+                }
+            }),
+            
+            "Login Attempt" => serde_json::json!({
+                "threat_level": threat_level,
+                "origin_country": "Unknown",
+                "common_attack_patterns": [
+                    "Fuerza bruta de credenciales",
+                    "Credential stuffing",
+                    "Password spraying"
+                ],
+                "geographic_context": {
+                    "country": "Global", 
+                    "country_code": "GL",
+                    "risk_assessment": "Ataques de fuerza bruta son comunes desde botnets distribuidas",
+                    "typical_attack_types": ["Brute Force", "Credential Stuffing", "Account Takeover"],
+                    "known_apt_groups": ["Cybercriminal groups", "APT1", "FIN7"]
+                }
+            }),
+
+            "File Access" => serde_json::json!({
+                "threat_level": threat_level,
+                "origin_country": "Internal/External",
+                "common_attack_patterns": [
+                    "Exfiltración de datos",
+                    "Escalamiento de privilegios",
+                    "Reconnaissance interno"
+                ],
+                "geographic_context": {
+                    "country": "Mixed",
+                    "country_code": "XX",
+                    "risk_assessment": "Acceso a archivos puede ser interno o externo, requiere análisis contextual",
+                    "typical_attack_types": ["Data Exfiltration", "Privilege Escalation", "Lateral Movement"],
+                    "known_apt_groups": ["APT28", "Carbanak", "Lazarus"]
+                }
+            }),
+
+            "SQL Query" => serde_json::json!({
+                "threat_level": threat_level,
+                "origin_country": "Global",
+                "common_attack_patterns": [
+                    "Inyección SQL",
+                    "Enumeración de base de datos",
+                    "Extracción de esquemas"
+                ],
+                "geographic_context": {
+                    "country": "Global",
+                    "country_code": "GL", 
+                    "risk_assessment": "Ataques SQL injection son comunes desde múltiples regiones",
+                    "typical_attack_types": ["SQL Injection", "Database Enumeration", "Data Extraction"],
+                    "known_apt_groups": ["Various cybercriminal groups", "APT40", "FIN8"]
+                }
+            }),
+
+            "Network Connection" => serde_json::json!({
+                "threat_level": threat_level,
+                "origin_country": "External",
+                "common_attack_patterns": [
+                    "Comando y control (C2)",
+                    "Exfiltración de datos", 
+                    "Comunicación con botnets"
+                ],
+                "geographic_context": {
+                    "country": "Unknown",
+                    "country_code": "XX",
+                    "risk_assessment": "Conexiones de red no autorizadas pueden indicar compromiso del sistema",
+                    "typical_attack_types": ["C2 Communication", "Data Exfiltration", "Botnet Activity"],
+                    "known_apt_groups": ["APT29", "Lazarus", "FIN12"]
+                }
+            }),
+
+            _ => serde_json::json!({
+                "threat_level": threat_level,
+                "origin_country": "Unknown",
+                "common_attack_patterns": [
+                    "Actividad no clasificada",
+                    "Comportamiento anómalo"
+                ],
+                "geographic_context": {
+                    "country": "Unknown",
+                    "country_code": "XX", 
+                    "risk_assessment": "Evento requiere análisis adicional para determinar nivel de amenaza",
+                    "typical_attack_types": ["Unknown"],
+                    "known_apt_groups": ["Unknown"]
+                }
+            })
+        }
+    }
+
+    /// Genera guías de mitigación específicas para cada tipo de evento
+    fn get_mitigation_guidance_for_event_type(event_type: &str, severity: &str) -> serde_json::Value {
+        match event_type {
+            "HTTP Request" => serde_json::json!({
+                "immediate_actions": [
+                    {"action": "Revisar logs del servidor web", "priority": "MEDIA", "timeline": "< 30min", "tools_required": ["Log analyzer"], "expected_outcome": "Identificar patrones de ataque"},
+                    {"action": "Verificar WAF rules", "priority": "MEDIA", "timeline": "< 1h", "tools_required": ["WAF"], "expected_outcome": "Asegurar filtrado adecuado"}
+                ],
+                "preventive_measures": [
+                    {"action": "Implementar rate limiting", "priority": "MEDIA", "timeline": "Corto plazo", "tools_required": ["Load balancer", "WAF"], "expected_outcome": "Prevenir ataques automatizados"},
+                    {"action": "Configurar validación de entrada", "priority": "ALTA", "timeline": "Corto plazo", "tools_required": ["Framework web"], "expected_outcome": "Filtrar solicitudes maliciosas"}
+                ],
+                "long_term_strategies": [
+                    {"action": "Implementar OWASP security headers", "priority": "MEDIA", "timeline": "Mensual", "tools_required": ["Servidor web"], "expected_outcome": "Hardening de aplicación web"},
+                    {"action": "Auditorías de seguridad web regulares", "priority": "MEDIA", "timeline": "Trimestral", "tools_required": ["Scanner web"], "expected_outcome": "Detección de vulnerabilidades"}
+                ]
+            }),
+
+            "Login Attempt" => serde_json::json!({
+                "immediate_actions": [
+                    {"action": "Bloquear IP tras múltiples fallos", "priority": "ALTA", "timeline": "Inmediato", "tools_required": ["Firewall", "IPS"], "expected_outcome": "Detener ataque en curso"},
+                    {"action": "Revisar cuentas comprometidas", "priority": "ALTA", "timeline": "< 1h", "tools_required": ["Sistema de usuarios"], "expected_outcome": "Identificar cuentas en riesgo"}
+                ],
+                "preventive_measures": [
+                    {"action": "Implementar CAPTCHA", "priority": "MEDIA", "timeline": "Corto plazo", "tools_required": ["Framework web"], "expected_outcome": "Prevenir ataques automatizados"},
+                    {"action": "Configurar 2FA obligatorio", "priority": "ALTA", "timeline": "Corto plazo", "tools_required": ["Sistema de auth"], "expected_outcome": "Fortalecer autenticación"}
+                ],
+                "long_term_strategies": [
+                    {"action": "Monitoreo continuo de credenciales", "priority": "ALTA", "timeline": "Continuo", "tools_required": ["SIEM"], "expected_outcome": "Detección temprana de compromiso"},
+                    {"action": "Políticas de contraseñas robustas", "priority": "MEDIA", "timeline": "Mensual", "tools_required": ["Active Directory"], "expected_outcome": "Reducir éxito de ataques"}
+                ]
+            }),
+
+            "File Access" => serde_json::json!({
+                "immediate_actions": [
+                    {"action": "Revisar permisos de archivo", "priority": "ALTA", "timeline": "< 1h", "tools_required": ["Sistema operativo"], "expected_outcome": "Verificar acceso autorizado"},
+                    {"action": "Analizar contexto de acceso", "priority": "MEDIA", "timeline": "< 2h", "tools_required": ["Audit logs"], "expected_outcome": "Determinar legitimidad"}
+                ],
+                "preventive_measures": [
+                    {"action": "Implementar principio de menor privilegio", "priority": "ALTA", "timeline": "Corto plazo", "tools_required": ["Sistema de permisos"], "expected_outcome": "Limitar acceso no autorizado"},
+                    {"action": "Configurar monitoring de archivos críticos", "priority": "MEDIA", "timeline": "Corto plazo", "tools_required": ["File integrity monitor"], "expected_outcome": "Detección de cambios no autorizados"}
+                ],
+                "long_term_strategies": [
+                    {"action": "Auditorías de permisos regulares", "priority": "MEDIA", "timeline": "Mensual", "tools_required": ["Access review tools"], "expected_outcome": "Mantenimiento de accesos apropiados"},
+                    {"action": "Implementar DLP (Data Loss Prevention)", "priority": "ALTA", "timeline": "Trimestral", "tools_required": ["DLP solution"], "expected_outcome": "Prevenir exfiltración"}
+                ]
+            }),
+
+            "SQL Query" => serde_json::json!({
+                "immediate_actions": [
+                    {"action": "Bloquear IP en WAF/Firewall", "priority": "CRÍTICA", "timeline": "Inmediato", "tools_required": ["WAF", "Firewall"], "expected_outcome": "Detener inyección SQL"},
+                    {"action": "Revisar logs de base de datos", "priority": "ALTA", "timeline": "< 30min", "tools_required": ["DB logs"], "expected_outcome": "Evaluar impacto de inyección"}
+                ],
+                "preventive_measures": [
+                    {"action": "Implementar prepared statements", "priority": "CRÍTICA", "timeline": "Inmediato", "tools_required": ["ORM", "Framework"], "expected_outcome": "Eliminar vulnerabilidad de inyección"},
+                    {"action": "Configurar WAF rules para SQL", "priority": "ALTA", "timeline": "< 4h", "tools_required": ["WAF"], "expected_outcome": "Filtrar ataques SQL"}
+                ],
+                "long_term_strategies": [
+                    {"action": "Auditorías de código regulares", "priority": "ALTA", "timeline": "Mensual", "tools_required": ["SAST tools"], "expected_outcome": "Identificar vulnerabilidades SQL"},
+                    {"action": "Capacitación en secure coding", "priority": "MEDIA", "timeline": "Trimestral", "tools_required": ["Training platform"], "expected_outcome": "Prevenir introducción de vulnerabilidades"}
+                ]
+            }),
+
+            "Network Connection" => serde_json::json!({
+                "immediate_actions": [
+                    {"action": "Analizar tráfico de red", "priority": "ALTA", "timeline": "< 1h", "tools_required": ["Network monitor"], "expected_outcome": "Identificar comunicación maliciosa"},
+                    {"action": "Bloquear comunicación sospechosa", "priority": "ALTA", "timeline": "< 30min", "tools_required": ["Firewall"], "expected_outcome": "Cortar comunicación C2"}
+                ],
+                "preventive_measures": [
+                    {"action": "Implementar segmentación de red", "priority": "ALTA", "timeline": "Corto plazo", "tools_required": ["Network equipment"], "expected_outcome": "Limitar propagación lateral"},
+                    {"action": "Configurar monitoring de conexiones", "priority": "MEDIA", "timeline": "Corto plazo", "tools_required": ["Network monitor"], "expected_outcome": "Detección temprana de anomalías"}
+                ],
+                "long_term_strategies": [
+                    {"action": "Zero Trust Network Architecture", "priority": "ALTA", "timeline": "Largo plazo", "tools_required": ["Security framework"], "expected_outcome": "Verificación continua de confianza"},
+                    {"action": "Threat hunting proactivo", "priority": "MEDIA", "timeline": "Continuo", "tools_required": ["Threat hunting tools"], "expected_outcome": "Identificación de amenazas avanzadas"}
+                ]
+            }),
+
+            _ => serde_json::json!({
+                "immediate_actions": [
+                    {"action": "Investigar evento desconocido", "priority": "MEDIA", "timeline": "< 2h", "tools_required": ["Analysis tools"], "expected_outcome": "Clasificar tipo de evento"},
+                    {"action": "Revisar contexto del sistema", "priority": "MEDIA", "timeline": "< 1h", "tools_required": ["System logs"], "expected_outcome": "Entender origen del evento"}
+                ],
+                "preventive_measures": [
+                    {"action": "Mejorar reglas de detección", "priority": "MEDIA", "timeline": "Corto plazo", "tools_required": ["SIEM"], "expected_outcome": "Mejor clasificación de eventos"},
+                    {"action": "Implementar monitoring adicional", "priority": "BAJA", "timeline": "Medio plazo", "tools_required": ["Monitoring tools"], "expected_outcome": "Mayor visibilidad"}
+                ],
+                "long_term_strategies": [
+                    {"action": "Revisión de arquitectura de seguridad", "priority": "BAJA", "timeline": "Largo plazo", "tools_required": ["Security review"], "expected_outcome": "Mejora de postura de seguridad"}
+                ]
+            })
+        }
+    }
 }

@@ -35,7 +35,7 @@ async fn main() -> Result<()> {
     ).await?;
 
     // Start web dashboard
-    let dashboard_port = 3030;
+    let dashboard_port = 8080;
     let _dashboard_server = initialize_dashboard(
         storage_manager.clone(),
         detector_engine.clone(),

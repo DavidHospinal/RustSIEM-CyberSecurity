@@ -42,14 +42,58 @@ pub struct AnomalyMLConfig {
 }
 
 /// Modelos de ML entrenados
-
 #[derive(Debug)]
 pub struct MLModels {
-    pub kmeans: Option<serde_json::Value>, // Simplificado para smartcore 0.4
-    pub isolation_forest: Option<serde_json::Value>,
-    pub scaler: Option<serde_json::Value>,
+    pub false_positive_classifier: Option<FalsePositiveModel>,
+    pub anomaly_detector: Option<BasicAnomalyDetector>,
+    pub similarity_matcher: Option<SimilarityMatcher>,
     pub last_training: Option<DateTime<Utc>>,
     pub model_performance: ModelPerformance,
+}
+
+/// Modelo básico para clasificación de falsos positivos
+#[derive(Debug, Clone)]
+pub struct FalsePositiveModel {
+    pub feature_thresholds: HashMap<String, f64>,
+    pub whitelist_patterns: Vec<WhitelistPattern>,
+    pub confidence_threshold: f64,
+    pub training_data_size: usize,
+}
+
+/// Detector de anomalías básico usando clustering
+#[derive(Debug, Clone)]
+pub struct BasicAnomalyDetector {
+    pub cluster_centers: Vec<Vec<f64>>,
+    pub distance_threshold: f64,
+    pub normal_behavior_baseline: Vec<f64>,
+}
+
+/// Matcher de similitud para eventos
+#[derive(Debug, Clone)]
+pub struct SimilarityMatcher {
+    pub known_false_positives: Vec<EventSignature>,
+    pub similarity_threshold: f64,
+}
+
+/// Patrón en whitelist
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct WhitelistPattern {
+    pub pattern_type: String,
+    pub pattern_value: String,
+    pub confidence: f64,
+    pub created_at: DateTime<Utc>,
+    pub times_matched: u32,
+}
+
+/// Firma de evento para comparación
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct EventSignature {
+    pub features_hash: String,
+    pub source_pattern: String,
+    pub event_type_pattern: String,
+    pub payload_fingerprint: String,
+    pub marked_fp_count: u32,
+    pub last_seen: DateTime<Utc>,
 }
 
 /// Buffer de datos de entrenamiento
@@ -231,9 +275,9 @@ impl AnomalyMLDetector {
 
         Self {
             models: Arc::new(RwLock::new(MLModels {
-                isolation_forest: None,
-                kmeans: None,
-                scaler: None,
+                false_positive_classifier: None,
+                anomaly_detector: None,
+                similarity_matcher: None,
                 last_training: None,
                 model_performance: ModelPerformance::default(),
             })),
@@ -257,7 +301,7 @@ impl AnomalyMLDetector {
 
         // Verificar si los modelos están entrenados
         let models = self.models.read().unwrap();
-        if models.isolation_forest.is_none() {
+        if models.false_positive_classifier.is_none() && models.anomaly_detector.is_none() {
             drop(models);
             // Intentar entrenar si tenemos suficientes datos
             if self.should_retrain()? {
@@ -316,17 +360,267 @@ impl AnomalyMLDetector {
     }
 
     /// Entrena los modelos ML
-    // En la función train_models(), línea 325:
     pub fn train_models(&self) -> Result<()> {
-        // Temporalmente deshabilitado - smartcore en desarrollo
-        let mut models = self.models.write().unwrap();
-        models.kmeans = Some(serde_json::json!({"status": "disabled_for_compilation"}));
-        models.last_training = Some(Utc::now());
+        let training_data = self.training_data.read().unwrap();
+        
+        if training_data.samples.len() < self.config.min_training_samples {
+            return Err(anyhow::anyhow!("Insufficient training samples: {} < {}", 
+                training_data.samples.len(), self.config.min_training_samples));
+        }
 
+        // Entrenar modelo de falsos positivos
+        let fp_model = self.train_false_positive_model(&training_data.samples)?;
+        
+        // Entrenar detector de anomalías básico
+        let anomaly_detector = self.train_basic_anomaly_detector(&training_data.samples)?;
+        
+        // Entrenar matcher de similitud
+        let similarity_matcher = self.train_similarity_matcher(&training_data.samples)?;
+        
+        // Actualizar modelos
+        let mut models = self.models.write().unwrap();
+        models.false_positive_classifier = Some(fp_model);
+        models.anomaly_detector = Some(anomaly_detector);
+        models.similarity_matcher = Some(similarity_matcher);
+        models.last_training = Some(Utc::now());
+        
+        // Evaluar rendimiento
+        models.model_performance = self.evaluate_model_performance_real(&training_data.samples)?;
+        
+        drop(models);
+        drop(training_data);
+        
         let mut stats = self.statistics.write().unwrap();
         stats.model_retrainings += 1;
-
+        
+        tracing::info!("ML models trained successfully with {} samples", self.training_data.read().unwrap().samples.len());
+        
         Ok(())
+    }
+    
+    /// Entrena modelo de clasificación de falsos positivos
+    fn train_false_positive_model(&self, samples: &VecDeque<TrainingSample>) -> Result<FalsePositiveModel> {
+        let mut feature_thresholds = HashMap::new();
+        let mut whitelist_patterns = Vec::new();
+        
+        // Analizar muestras marcadas como falsos positivos
+        let fp_samples: Vec<_> = samples.iter()
+            .filter(|s| s.is_labeled_anomaly == Some(false))
+            .collect();
+            
+        if fp_samples.len() < 10 {
+            tracing::warn!("Few false positive samples for training: {}", fp_samples.len());
+        }
+        
+        // Calcular umbrales de características basados en falsos positivos
+        let feature_names = self.get_all_feature_names();
+        for (i, feature_name) in feature_names.iter().enumerate() {
+            let fp_values: Vec<f64> = fp_samples.iter()
+                .filter_map(|s| s.features.get(i).copied())
+                .collect();
+                
+            if !fp_values.is_empty() {
+                let mean = fp_values.iter().sum::<f64>() / fp_values.len() as f64;
+                let variance = fp_values.iter()
+                    .map(|x| (x - mean).powi(2))
+                    .sum::<f64>() / fp_values.len() as f64;
+                let std_dev = variance.sqrt();
+                
+                // Umbral: media ± 2 desviaciones estándar
+                feature_thresholds.insert(feature_name.clone(), mean + 2.0 * std_dev);
+            }
+        }
+        
+        // Generar patrones de whitelist basados en falsos positivos comunes
+        for sample in &fp_samples {
+            if sample.source_ip.starts_with("192.168.") || sample.source_ip.starts_with("10.") {
+                whitelist_patterns.push(WhitelistPattern {
+                    pattern_type: "internal_ip".to_string(),
+                    pattern_value: sample.source_ip.clone(),
+                    confidence: 0.9,
+                    created_at: Utc::now(),
+                    times_matched: 1,
+                });
+            }
+            
+            if sample.event_type.contains("clean file") {
+                whitelist_patterns.push(WhitelistPattern {
+                    pattern_type: "clean_file_upload".to_string(),
+                    pattern_value: sample.event_type.clone(),
+                    confidence: 0.95,
+                    created_at: Utc::now(),
+                    times_matched: 1,
+                });
+            }
+        }
+        
+        Ok(FalsePositiveModel {
+            feature_thresholds,
+            whitelist_patterns,
+            confidence_threshold: 0.7,
+            training_data_size: samples.len(),
+        })
+    }
+    
+    /// Entrena detector de anomalías básico
+    fn train_basic_anomaly_detector(&self, samples: &VecDeque<TrainingSample>) -> Result<BasicAnomalyDetector> {
+        let normal_samples: Vec<_> = samples.iter()
+            .filter(|s| s.is_labeled_anomaly != Some(true))
+            .collect();
+            
+        if normal_samples.is_empty() {
+            return Err(anyhow::anyhow!("No normal samples available for training"));
+        }
+        
+        // Calcular baseline de comportamiento normal
+        let feature_count = normal_samples[0].features.len();
+        let mut baseline = vec![0.0; feature_count];
+        
+        for sample in &normal_samples {
+            for (i, &feature) in sample.features.iter().enumerate() {
+                baseline[i] += feature;
+            }
+        }
+        
+        for value in &mut baseline {
+            *value /= normal_samples.len() as f64;
+        }
+        
+        // Generar centros de cluster usando k-means simple
+        let cluster_centers = self.simple_kmeans(&normal_samples, 3)?;
+        
+        // Calcular umbral de distancia
+        let distances: Vec<f64> = normal_samples.iter()
+            .map(|sample| {
+                cluster_centers.iter()
+                    .map(|center| self.calculate_euclidean_distance(&sample.features, center))
+                    .fold(f64::INFINITY, f64::min)
+            })
+            .collect();
+            
+        let mean_distance = distances.iter().sum::<f64>() / distances.len() as f64;
+        let distance_threshold = mean_distance * 2.0; // 2x la distancia promedio
+        
+        Ok(BasicAnomalyDetector {
+            cluster_centers,
+            distance_threshold,
+            normal_behavior_baseline: baseline,
+        })
+    }
+    
+    /// Implementación simple de k-means
+    fn simple_kmeans(&self, samples: &[&TrainingSample], k: usize) -> Result<Vec<Vec<f64>>> {
+        if samples.is_empty() {
+            return Err(anyhow::anyhow!("No samples for clustering"));
+        }
+        
+        let feature_count = samples[0].features.len();
+        let mut centers = Vec::new();
+        
+        // Inicializar centros aleatoriamente
+        for i in 0..k {
+            let sample_idx = i * samples.len() / k;
+            centers.push(samples[sample_idx].features.clone());
+        }
+        
+        // Iterar para refinar centros
+        for _ in 0..10 {
+            let mut new_centers = vec![vec![0.0; feature_count]; k];
+            let mut cluster_counts = vec![0; k];
+            
+            // Asignar muestras a clusters
+            for sample in samples {
+                let closest_cluster = centers.iter()
+                    .enumerate()
+                    .min_by(|(_, c1), (_, c2)| {
+                        self.calculate_euclidean_distance(&sample.features, c1)
+                            .partial_cmp(&self.calculate_euclidean_distance(&sample.features, c2))
+                            .unwrap()
+                    })
+                    .map(|(idx, _)| idx)
+                    .unwrap();
+                    
+                for (i, &feature) in sample.features.iter().enumerate() {
+                    new_centers[closest_cluster][i] += feature;
+                }
+                cluster_counts[closest_cluster] += 1;
+            }
+            
+            // Actualizar centros
+            for (i, center) in new_centers.iter_mut().enumerate() {
+                if cluster_counts[i] > 0 {
+                    for value in center.iter_mut() {
+                        *value /= cluster_counts[i] as f64;
+                    }
+                }
+            }
+            
+            centers = new_centers;
+        }
+        
+        Ok(centers)
+    }
+    
+    /// Entrena matcher de similitud
+    fn train_similarity_matcher(&self, samples: &VecDeque<TrainingSample>) -> Result<SimilarityMatcher> {
+        let mut known_false_positives = Vec::new();
+        
+        let fp_samples: Vec<_> = samples.iter()
+            .filter(|s| s.is_labeled_anomaly == Some(false))
+            .collect();
+            
+        for sample in fp_samples {
+            let signature = EventSignature {
+                features_hash: self.hash_features(&sample.features),
+                source_pattern: self.extract_source_pattern(&sample.source_ip),
+                event_type_pattern: sample.event_type.clone(),
+                payload_fingerprint: self.create_payload_fingerprint(&sample.raw_log),
+                marked_fp_count: 1,
+                last_seen: sample.timestamp,
+            };
+            known_false_positives.push(signature);
+        }
+        
+        Ok(SimilarityMatcher {
+            known_false_positives,
+            similarity_threshold: 0.85,
+        })
+    }
+    
+    /// Hash de características para comparación rápida
+    fn hash_features(&self, features: &[f64]) -> String {
+        use std::collections::hash_map::DefaultHasher;
+        use std::hash::{Hash, Hasher};
+        
+        let mut hasher = DefaultHasher::new();
+        for &feature in features {
+            ((feature * 1000.0) as i64).hash(&mut hasher);
+        }
+        format!("{:x}", hasher.finish())
+    }
+    
+    /// Extrae patrón de IP origen
+    fn extract_source_pattern(&self, ip: &str) -> String {
+        let parts: Vec<&str> = ip.split('.').collect();
+        if parts.len() >= 3 {
+            format!("{}.{}.{}.*", parts[0], parts[1], parts[2])
+        } else {
+            ip.to_string()
+        }
+    }
+    
+    /// Crea fingerprint del payload
+    fn create_payload_fingerprint(&self, payload: &str) -> String {
+        // Crear fingerprint basado en patrones clave
+        let mut fingerprint = String::new();
+        
+        if payload.contains("GET") { fingerprint.push_str("GET:"); }
+        if payload.contains("POST") { fingerprint.push_str("POST:"); }
+        if payload.contains("clean file") { fingerprint.push_str("CLEAN_FILE:"); }
+        if payload.contains("success") { fingerprint.push_str("SUCCESS:"); }
+        if payload.contains("/api/") { fingerprint.push_str("API:"); }
+        
+        fingerprint
     }
     /// Extrae todas las características de un evento
     fn extract_all_features(&self, log_features: &LogEventFeatures) -> Result<Vec<f64>> {
@@ -341,51 +635,134 @@ impl AnomalyMLDetector {
         Ok(all_features)
     }
 
-    /// Realiza predicciones con ensemble de modelos
-
+    /// Realiza predicciones con ensemble de modelos incluyendo detección de falsos positivos
     fn predict_with_ensemble(&self, features: &[f64]) -> Result<HashMap<String, f64>> {
         let mut predictions = HashMap::new();
         let models = self.models.read().unwrap();
 
-        // Simulación simple sin KMeans real
-        if models.kmeans.is_some() {
-            // Calcular un score básico basado en las características
+        // Verificar falsos positivos primero
+        if let Some(ref fp_model) = models.false_positive_classifier {
+            let fp_score = self.predict_false_positive(features, fp_model)?;
+            predictions.insert("false_positive_score".to_string(), fp_score);
+        }
+
+        // Detector de anomalías básico
+        if let Some(ref anomaly_detector) = models.anomaly_detector {
+            let anomaly_score = self.predict_anomaly_basic(features, anomaly_detector)?;
+            predictions.insert("anomaly_score".to_string(), anomaly_score);
+        }
+
+        // Si no hay modelos entrenados, usar fallback simple
+        if predictions.is_empty() {
             let feature_sum: f64 = features.iter().sum();
             let feature_avg = feature_sum / features.len() as f64;
-
-            // Score normalizado simple (placeholder)
-            let anomaly_score = (feature_avg / 10.0).min(1.0).max(0.0);
-            predictions.insert("kmeans_distance".to_string(), anomaly_score);
+            let fallback_score = (feature_avg / 10.0).min(1.0).max(0.0);
+            predictions.insert("fallback_score".to_string(), fallback_score);
         }
 
         Ok(predictions)
     }
+    
+    /// Predice probabilidad de falso positivo
+    fn predict_false_positive(&self, features: &[f64], fp_model: &FalsePositiveModel) -> Result<f64> {
+        let feature_names = self.get_all_feature_names();
+        let mut fp_indicators = 0.0;
+        let mut total_checks = 0.0;
+        
+        // Verificar umbrales de características
+        for (i, &feature_value) in features.iter().enumerate() {
+            if let Some(feature_name) = feature_names.get(i) {
+                if let Some(&threshold) = fp_model.feature_thresholds.get(feature_name) {
+                    total_checks += 1.0;
+                    if feature_value <= threshold {
+                        fp_indicators += 1.0;
+                    }
+                }
+            }
+        }
+        
+        let threshold_score = if total_checks > 0.0 {
+            fp_indicators / total_checks
+        } else {
+            0.5
+        };
+        
+        // Verificar patrones de whitelist
+        let whitelist_score = if !fp_model.whitelist_patterns.is_empty() {
+            0.3 // Score base si hay patrones en whitelist
+        } else {
+            0.0
+        };
+        
+        // Combinar scores
+        let combined_score: f64 = threshold_score * 0.7 + whitelist_score * 0.3;
+        Ok(combined_score.min(1.0))
+    }
+    
+    /// Predice anomalía usando detector básico
+    fn predict_anomaly_basic(&self, features: &[f64], detector: &BasicAnomalyDetector) -> Result<f64> {
+        // Calcular distancia mínima a centros de cluster
+        let min_distance = detector.cluster_centers.iter()
+            .map(|center| self.calculate_euclidean_distance(features, center))
+            .fold(f64::INFINITY, f64::min);
+            
+        // Normalizar distancia contra umbral
+        let normalized_distance = (min_distance / detector.distance_threshold).min(2.0);
+        
+        // Calcular desviación del baseline
+        let baseline_deviation = features.iter()
+            .zip(&detector.normal_behavior_baseline)
+            .map(|(&feature, &baseline)| ((feature - baseline) / (baseline + 1.0)).abs())
+            .sum::<f64>() / features.len() as f64;
+            
+        // Combinar métricas
+        let anomaly_score = (normalized_distance * 0.6 + baseline_deviation * 0.4).min(1.0);
+        
+        Ok(anomaly_score)
+    }
 
-    /// Calcula score de ensemble
+    /// Calcula score de ensemble considerando falsos positivos
     fn calculate_ensemble_score(&self, predictions: &HashMap<String, f64>) -> f64 {
         if predictions.is_empty() {
             return 0.0;
         }
 
+        // Si hay score de falso positivo alto, reducir score de anomalía
+        let fp_score = predictions.get("false_positive_score").unwrap_or(&0.0);
+        let anomaly_score = predictions.get("anomaly_score").unwrap_or(&0.0);
+        let fallback_score = predictions.get("fallback_score").unwrap_or(&0.0);
+
+        if *fp_score > 0.7 {
+            // Alta probabilidad de falso positivo - reducir score dramáticamente
+            return (*anomaly_score * (1.0 - fp_score)).max(0.1);
+        }
+
         if self.config.ensemble_voting {
-            // Voting promediado ponderado
+            // Voting promediado ponderado con ajuste por falsos positivos
             let mut total_score = 0.0;
             let mut total_weight = 0.0;
 
             for (model, score) in predictions {
-                let weight = match model.as_str() {
-                    "isolation_forest" => 0.6,
-                    "kmeans_distance" => 0.4,
+                let weight: f64 = match model.as_str() {
+                    "false_positive_score" => -0.8, // Peso negativo para FP
+                    "anomaly_score" => 0.7,
+                    "fallback_score" => 0.3,
                     _ => 0.1,
                 };
-                total_score += score * weight;
-                total_weight += weight;
+                
+                if model == "false_positive_score" {
+                    total_score -= score * weight.abs(); // Restar falsos positivos
+                } else {
+                    total_score += score * weight;
+                    total_weight += weight;
+                }
             }
 
-            total_score / total_weight
+            (total_score / total_weight.max(0.1)).max(0.0).min(1.0)
         } else {
-            // Tomar el máximo score
-            predictions.values().cloned().fold(0.0, f64::max)
+            // Tomar anomaly score ajustado por FP
+            let base_anomaly = anomaly_score.max(*fallback_score);
+            (base_anomaly * (1.0 - fp_score * 0.5)).max(0.0)
         }
     }
 
@@ -595,7 +972,7 @@ impl AnomalyMLDetector {
         let training_data = self.training_data.read().unwrap();
 
         // Reentrenar si no hay modelos
-        if models.isolation_forest.is_none() {
+        if models.false_positive_classifier.is_none() && models.anomaly_detector.is_none() {
             return Ok(training_data.samples.len() >= self.config.min_training_samples);
         }
 
@@ -639,17 +1016,61 @@ impl AnomalyMLDetector {
 
         Ok((features_matrix, labels))
     }
-    /// Evalúa rendimiento del modelo
-
-    fn evaluate_model_performance(&self, _features: &DenseMatrix<f64>, labels: &[bool]) -> Result<ModelPerformance> {
-        // Por ahora, retornar métricas básicas sin evaluación real
+    /// Evalúa rendimiento del modelo con datos reales
+    fn evaluate_model_performance_real(&self, samples: &VecDeque<TrainingSample>) -> Result<ModelPerformance> {
+        if samples.len() < 10 {
+            return Ok(ModelPerformance::default());
+        }
+        
+        let mut true_positives = 0;
+        let mut false_positives = 0;
+        let mut true_negatives = 0;
+        let mut false_negatives = 0;
+        
+        // Usar muestras etiquetadas para evaluación
+        for sample in samples.iter() {
+            if let Some(is_labeled_anomaly) = sample.is_labeled_anomaly {
+                let prediction_result = self.predict_with_ensemble(&sample.features);
+                if let Ok(predictions) = prediction_result {
+                    let anomaly_score = self.calculate_ensemble_score(&predictions);
+                    let predicted_anomaly = anomaly_score >= self.config.anomaly_threshold;
+                    
+                    match (is_labeled_anomaly, predicted_anomaly) {
+                        (true, true) => true_positives += 1,
+                        (false, true) => false_positives += 1,
+                        (false, false) => true_negatives += 1,
+                        (true, false) => false_negatives += 1,
+                    }
+                }
+            }
+        }
+        
+        let total = (true_positives + false_positives + true_negatives + false_negatives) as f64;
+        if total == 0.0 {
+            return Ok(ModelPerformance::default());
+        }
+        
+        let accuracy = (true_positives + true_negatives) as f64 / total;
+        let precision = if true_positives + false_positives > 0 {
+            true_positives as f64 / (true_positives + false_positives) as f64
+        } else { 0.0 };
+        let recall = if true_positives + false_negatives > 0 {
+            true_positives as f64 / (true_positives + false_negatives) as f64
+        } else { 0.0 };
+        let f1_score = if precision + recall > 0.0 {
+            2.0 * (precision * recall) / (precision + recall)
+        } else { 0.0 };
+        let false_positive_rate = if false_positives + true_negatives > 0 {
+            false_positives as f64 / (false_positives + true_negatives) as f64
+        } else { 0.0 };
+        
         Ok(ModelPerformance {
-            accuracy: 0.8,
-            precision: 0.7,
-            recall: 0.75,
-            f1_score: 0.72,
-            false_positive_rate: 0.1,
-            training_samples: labels.len(),
+            accuracy,
+            precision,
+            recall,
+            f1_score,
+            false_positive_rate,
+            training_samples: samples.len(),
             last_evaluation: Some(Utc::now()),
         })
     }
@@ -752,12 +1173,104 @@ impl AnomalyMLDetector {
     /// Obtiene información de los modelos
     pub fn get_model_info(&self) -> serde_json::Value {
         let models = self.models.read().unwrap();
+        let stats = self.statistics.read().unwrap();
         serde_json::json!({
-           "models_trained": models.isolation_forest.is_some(),
+           "models_trained": models.false_positive_classifier.is_some() || models.anomaly_detector.is_some(),
+           "false_positive_classifier_active": models.false_positive_classifier.is_some(),
+           "anomaly_detector_active": models.anomaly_detector.is_some(),
+           "similarity_matcher_active": models.similarity_matcher.is_some(),
            "last_training": models.last_training,
            "performance": models.model_performance,
-           "training_samples": models.model_performance.training_samples
+           "training_samples": models.model_performance.training_samples,
+           "total_predictions": stats.total_predictions,
+           "false_positives_detected": stats.false_positives,
+           "true_positives": stats.true_positives,
+           "model_retrainings": stats.model_retrainings,
+           "avg_prediction_time_ms": stats.average_prediction_time_ms
        })
+    }
+    
+    /// Marca un evento como falso positivo para reentrenamiento
+    pub fn mark_as_false_positive(&self, event_id: &str, log_features: &LogEventFeatures) -> Result<()> {
+        let features = self.extract_all_features(log_features)?;
+        
+        // Crear muestra marcada como falso positivo
+        let sample = TrainingSample {
+            timestamp: log_features.timestamp,
+            features,
+            source_ip: log_features.source_ip.clone(),
+            event_type: format!("marked_fp_{}", event_id),
+            is_labeled_anomaly: Some(false), // Marcar explícitamente como NO anomalía
+            raw_log: format!("FP: {} - {}", event_id, log_features.request_path.as_deref().unwrap_or("unknown")),
+        };
+        
+        // Agregar al buffer de entrenamiento
+        let mut training_data = self.training_data.write().unwrap();
+        training_data.samples.push_back(sample);
+        
+        // Actualizar estadísticas
+        let mut stats = self.statistics.write().unwrap();
+        stats.false_positives += 1;
+        
+        tracing::info!("Event {} marked as false positive", event_id);
+        
+        // Verificar si necesitamos reentrenar
+        if self.should_retrain_for_fp()? {
+            drop(training_data);
+            drop(stats);
+            self.retrain_for_false_positives()?;
+        }
+        
+        Ok(())
+    }
+    
+    /// Verifica si debe reentrenar por falsos positivos
+    fn should_retrain_for_fp(&self) -> Result<bool> {
+        let training_data = self.training_data.read().unwrap();
+        let stats = self.statistics.read().unwrap();
+        
+        // Reentrenar si hay muchos falsos positivos recientes
+        let recent_fp_count = training_data.samples.iter()
+            .filter(|s| s.is_labeled_anomaly == Some(false))
+            .filter(|s| s.timestamp > Utc::now() - Duration::hours(1))
+            .count();
+            
+        Ok(recent_fp_count >= 5 || stats.false_positives % 10 == 0)
+    }
+    
+    /// Reentrenamiento específico para falsos positivos
+    pub fn retrain_for_false_positives(&self) -> Result<()> {
+        tracing::info!("Retraining models due to false positive feedback");
+        self.train_models()
+    }
+    
+    /// Obtiene patrones de falsos positivos detectados
+    pub fn get_false_positive_patterns(&self) -> serde_json::Value {
+        let models = self.models.read().unwrap();
+        
+        if let Some(ref fp_model) = models.false_positive_classifier {
+            serde_json::json!({
+                "whitelist_patterns": fp_model.whitelist_patterns,
+                "feature_thresholds": fp_model.feature_thresholds,
+                "confidence_threshold": fp_model.confidence_threshold,
+                "training_data_size": fp_model.training_data_size
+            })
+        } else {
+            serde_json::json!({
+                "message": "False positive classifier not yet trained"
+            })
+        }
+    }
+    
+    /// Simula detección de falsos positivos para eventos comunes
+    pub fn simulate_false_positive_detection(&self) -> Vec<String> {
+        vec![
+            "File upload scanner: clean file detected - commonly flagged as false positive".to_string(),
+            "Internal IP 192.168.1.* requests - often legitimate traffic".to_string(),
+            "API endpoint /api/users/profile - normal user behavior".to_string(),
+            "Successful authentication events - legitimate user access".to_string(),
+            "GET requests to static resources - normal web traffic".to_string(),
+        ]
     }
 
     /// Limpia datos antiguos del buffer

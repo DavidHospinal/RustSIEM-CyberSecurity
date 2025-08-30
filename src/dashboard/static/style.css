@@ -927,6 +927,459 @@ body {
     background: var(--accent-color);
 }
 
+/* ========== ESTILOS PARA REPORTES ========== */
+
+/* Reports Page */
+.reports-content {
+    margin-top: 20px;
+}
+
+.charts-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+    gap: 24px;
+    margin-bottom: 32px;
+}
+
+.chart-container {
+    background: var(--gradient-card);
+    border-radius: var(--border-radius);
+    border: 1px solid var(--border-color);
+    padding: 24px;
+    transition: var(--transition);
+}
+
+.chart-container:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--shadow-lg);
+    border-color: rgba(56, 189, 248, 0.3);
+}
+
+.chart-container.large {
+    grid-column: span 2;
+}
+
+.chart-header {
+    margin-bottom: 20px;
+}
+
+.chart-header h3 {
+    color: var(--text-primary);
+    font-size: 1.3rem;
+    margin-bottom: 4px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.chart-header p {
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+}
+
+.chart-wrapper {
+    position: relative;
+    height: 300px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.chart-wrapper canvas {
+    max-width: 100%;
+    max-height: 100%;
+}
+
+/* Geographic Heatmap */
+.heatmap-container {
+    min-height: 250px;
+}
+
+.heatmap-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 12px;
+}
+
+.geo-item {
+    background: rgba(15, 23, 42, 0.5);
+    border-radius: 8px;
+    padding: 12px;
+    border-left: 4px solid var(--warning-color);
+    transition: var(--transition);
+}
+
+.geo-item:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-sm);
+}
+
+.geo-item.threat-high {
+    border-left-color: var(--danger-color);
+}
+
+.geo-item.threat-medium {
+    border-left-color: var(--warning-color);
+}
+
+.geo-item.threat-low {
+    border-left-color: var(--success-color);
+}
+
+.geo-country {
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 4px;
+}
+
+.geo-threats, .geo-level {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+}
+
+/* ML Metrics Grid */
+.ml-metrics-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+    gap: 16px;
+}
+
+.ml-metric {
+    background: rgba(15, 23, 42, 0.3);
+    padding: 16px;
+    border-radius: 8px;
+    text-align: center;
+    border: 1px solid var(--border-color);
+}
+
+.ml-metric .metric-label {
+    color: var(--text-secondary);
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 8px;
+}
+
+.ml-metric .metric-value {
+    color: var(--accent-color);
+    font-size: 1.2rem;
+    font-weight: 700;
+}
+
+/* False Positives Dashboard */
+.fp-dashboard {
+    display: grid;
+    gap: 24px;
+}
+
+.fp-summary {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 16px;
+}
+
+.fp-stat {
+    background: rgba(15, 23, 42, 0.3);
+    padding: 16px;
+    border-radius: 8px;
+    text-align: center;
+    border: 1px solid var(--border-color);
+}
+
+.fp-stat-value {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--info-color);
+    margin-bottom: 4px;
+}
+
+.fp-stat-label {
+    color: var(--text-secondary);
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.fp-patterns-section h4 {
+    color: var(--text-primary);
+    margin-bottom: 12px;
+    font-size: 1.1rem;
+}
+
+.fp-patterns-list {
+    display: grid;
+    gap: 8px;
+}
+
+.fp-pattern-item {
+    background: rgba(15, 23, 42, 0.3);
+    border-radius: 6px;
+    padding: 12px;
+    border-left: 3px solid var(--info-color);
+    transition: var(--transition);
+}
+
+.fp-pattern-item:hover {
+    background: rgba(15, 23, 42, 0.5);
+    transform: translateX(4px);
+}
+
+.fp-pattern-item .pattern-type {
+    font-weight: 600;
+    color: var(--accent-color);
+    font-size: 0.85rem;
+    margin-bottom: 4px;
+}
+
+.fp-pattern-item .pattern-value {
+    color: var(--text-primary);
+    font-family: 'Monaco', 'Courier New', monospace;
+    font-size: 0.8rem;
+    margin-bottom: 8px;
+    background: rgba(0, 0, 0, 0.2);
+    padding: 4px 8px;
+    border-radius: 4px;
+}
+
+.fp-pattern-item .pattern-stats {
+    display: flex;
+    justify-content: space-between;
+    color: var(--text-secondary);
+    font-size: 0.75rem;
+}
+
+/* Report Actions */
+.report-actions {
+    display: flex;
+    gap: 12px;
+    justify-content: center;
+    flex-wrap: wrap;
+    padding: 20px;
+    background: rgba(15, 23, 42, 0.3);
+    border-radius: var(--border-radius);
+    border: 1px solid var(--border-color);
+}
+
+.report-actions .control-btn {
+    padding: 12px 24px;
+    font-size: 0.95rem;
+    font-weight: 600;
+}
+
+.report-actions .control-btn.secondary {
+    background: rgba(148, 163, 184, 0.1);
+    color: var(--text-secondary);
+    border-color: rgba(148, 163, 184, 0.3);
+}
+
+.report-actions .control-btn.secondary:hover {
+    background: rgba(148, 163, 184, 0.2);
+    color: var(--text-primary);
+}
+
+/* ML Modal Improvements */
+.ml-modal .modal-content {
+    color: var(--text-primary);
+}
+
+.ml-tabs {
+    display: flex;
+    gap: 2px;
+    margin-bottom: 20px;
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 8px;
+    padding: 4px;
+}
+
+.ml-tabs .tab-btn {
+    flex: 1;
+    padding: 12px 16px;
+    background: transparent;
+    border: none;
+    color: var(--text-secondary);
+    border-radius: 6px;
+    cursor: pointer;
+    transition: var(--transition);
+    font-weight: 500;
+}
+
+.ml-tabs .tab-btn:hover {
+    background: rgba(56, 189, 248, 0.1);
+    color: var(--accent-color);
+}
+
+.ml-tabs .tab-btn.active {
+    background: var(--accent-color);
+    color: white;
+    box-shadow: var(--shadow-sm);
+}
+
+.tab-content {
+    display: none;
+    padding: 20px;
+}
+
+.tab-content.active {
+    display: block;
+}
+
+.ml-overview, .performance-metrics, 
+.false-positives-section, .training-section {
+    color: var(--text-primary);
+}
+
+.model-status-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 16px;
+    margin-bottom: 24px;
+}
+
+.status-card {
+    background: rgba(15, 23, 42, 0.5);
+    padding: 16px;
+    border-radius: 8px;
+    border: 1px solid var(--border-color);
+    text-align: center;
+}
+
+.status-card h4 {
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+    margin-bottom: 8px;
+}
+
+.status-indicator.active {
+    color: var(--success-color);
+    background: rgba(16, 185, 129, 0.1);
+    padding: 4px 12px;
+    border-radius: 12px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    border: 1px solid rgba(16, 185, 129, 0.3);
+}
+
+.status-indicator.inactive {
+    color: var(--text-secondary);
+    background: rgba(148, 163, 184, 0.1);
+    padding: 4px 12px;
+    border-radius: 12px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    border: 1px solid rgba(148, 163, 184, 0.3);
+}
+
+.ml-actions {
+    display: flex;
+    gap: 12px;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+.metrics-cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+    gap: 16px;
+    margin-bottom: 20px;
+}
+
+.metric-card .metric-value.large {
+    font-size: 2rem;
+    color: var(--accent-color);
+}
+
+.performance-stats {
+    background: rgba(15, 23, 42, 0.3);
+    padding: 16px;
+    border-radius: 8px;
+    border: 1px solid var(--border-color);
+}
+
+.performance-stats p {
+    margin-bottom: 8px;
+    color: var(--text-secondary);
+}
+
+.fp-summary h4 {
+    color: var(--info-color);
+    margin-bottom: 16px;
+}
+
+.training-controls {
+    margin-bottom: 24px;
+}
+
+.training-actions {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.training-log {
+    background: rgba(15, 23, 42, 0.3);
+    padding: 16px;
+    border-radius: 8px;
+    border: 1px solid var(--border-color);
+}
+
+.training-log h5 {
+    color: var(--text-secondary);
+    margin-bottom: 12px;
+    font-size: 0.9rem;
+}
+
+.log-entries {
+    font-family: 'Monaco', 'Courier New', monospace;
+    font-size: 0.8rem;
+}
+
+.log-entry {
+    color: var(--text-secondary);
+    margin-bottom: 4px;
+    padding: 4px;
+    background: rgba(0, 0, 0, 0.1);
+    border-radius: 3px;
+}
+
+/* Responsive adjustments for reports */
+@media (max-width: 1200px) {
+    .chart-container.large {
+        grid-column: span 1;
+    }
+}
+
+@media (max-width: 768px) {
+    .charts-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .fp-summary {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    
+    .ml-metrics-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    
+    .model-status-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .report-actions {
+        flex-direction: column;
+    }
+}
+
+@media (max-width: 480px) {
+    .fp-summary {
+        grid-template-columns: 1fr;
+    }
+    
+    .ml-metrics-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
 /* Tooltips Educativos */
 .tooltip-container {
     position: relative;

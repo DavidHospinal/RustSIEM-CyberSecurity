@@ -6,6 +6,7 @@
     <title>RustSIEM - Security Information & Event Management</title>
     <link rel="stylesheet" href="/static/style.css">
     <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🔐</text></svg>">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
 </head>
 <body>
 <div class="container">
@@ -538,12 +539,128 @@
 
         <section id="reports-page" class="page-content">
             <div class="page-header">
-                <h2>📑 Reports</h2>
+                <h2>📑 Reports & Analytics</h2>
+                <p>Comprehensive security insights and trend analysis</p>
             </div>
-            <div class="placeholder-content">
-                <span class="placeholder-icon">📑</span>
-                <h3>Reports & Analytics</h3>
-                <p>Comprehensive reporting dashboard coming soon...</p>
+            
+            <!-- Reports Content -->
+            <div class="reports-content">
+                <!-- Chart Grid -->
+                <div class="charts-grid">
+                    <!-- Events by Type Chart -->
+                    <div class="chart-container">
+                        <div class="chart-header">
+                            <h3>📊 Events by Type Distribution</h3>
+                            <p>Real-time breakdown of security events by category</p>
+                        </div>
+                        <div class="chart-wrapper">
+                            <canvas id="events-type-chart" width="400" height="200"></canvas>
+                        </div>
+                    </div>
+
+                    <!-- Threat Trends Chart -->
+                    <div class="chart-container large">
+                        <div class="chart-header">
+                            <h3>📈 Threat Trends Over Time</h3>
+                            <p>Security incidents timeline and evolution</p>
+                        </div>
+                        <div class="chart-wrapper">
+                            <canvas id="threat-trends-chart" width="800" height="300"></canvas>
+                        </div>
+                    </div>
+
+                    <!-- Geographic Heatmap -->
+                    <div class="chart-container">
+                        <div class="chart-header">
+                            <h3>🌍 Geographic Threat Distribution</h3>
+                            <p>Attack sources by country and region</p>
+                        </div>
+                        <div id="geographic-heatmap" class="heatmap-container">
+                            <!-- Populated dynamically -->
+                        </div>
+                    </div>
+
+                    <!-- ML Performance Metrics -->
+                    <div class="chart-container">
+                        <div class="chart-header">
+                            <h3>🧠 ML Model Performance</h3>
+                            <p>Machine learning detection accuracy and metrics</p>
+                        </div>
+                        <div class="ml-metrics-grid">
+                            <div class="ml-metric">
+                                <div class="metric-label">Accuracy</div>
+                                <div class="metric-value" id="ml-accuracy-display">--</div>
+                            </div>
+                            <div class="ml-metric">
+                                <div class="metric-label">Precision</div>
+                                <div class="metric-value" id="ml-precision-display">--</div>
+                            </div>
+                            <div class="ml-metric">
+                                <div class="metric-label">Recall</div>
+                                <div class="metric-value" id="ml-recall-display">--</div>
+                            </div>
+                            <div class="ml-metric">
+                                <div class="metric-label">F1-Score</div>
+                                <div class="metric-value" id="ml-f1-score-display">--</div>
+                            </div>
+                            <div class="ml-metric">
+                                <div class="metric-label">FP Rate</div>
+                                <div class="metric-value" id="ml-fp-rate-display">--</div>
+                            </div>
+                            <div class="ml-metric">
+                                <div class="metric-label">Training Samples</div>
+                                <div class="metric-value" id="ml-training-samples-display">--</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- False Positives Dashboard -->
+                    <div class="chart-container large">
+                        <div class="chart-header">
+                            <h3>🎯 False Positives Analysis</h3>
+                            <p>ML-powered false positive detection and mitigation</p>
+                        </div>
+                        <div class="fp-dashboard">
+                            <div class="fp-summary">
+                                <div class="fp-stat">
+                                    <div class="fp-stat-value" id="total-false-positives">--</div>
+                                    <div class="fp-stat-label">Total False Positives</div>
+                                </div>
+                                <div class="fp-stat">
+                                    <div class="fp-stat-value" id="fp-reduction-percentage">--</div>
+                                    <div class="fp-stat-label">Reduction Rate</div>
+                                </div>
+                                <div class="fp-stat">
+                                    <div class="fp-stat-value" id="automated-mitigations">--</div>
+                                    <div class="fp-stat-label">Automated Mitigations</div>
+                                </div>
+                                <div class="fp-stat">
+                                    <div class="fp-stat-value" id="manual-markings">--</div>
+                                    <div class="fp-stat-label">Manual Markings</div>
+                                </div>
+                            </div>
+                            <div class="fp-patterns-section">
+                                <h4>Common False Positive Patterns</h4>
+                                <div id="fp-patterns-container" class="fp-patterns-list">
+                                    <!-- Populated dynamically -->
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Report Actions -->
+                <div class="report-actions">
+                    <button class="control-btn" onclick="dashboard.loadReportsData()">
+                        🔄 Refresh Data
+                    </button>
+                    <button class="control-btn secondary" onclick="dashboard.exportMLReport()">
+                        📊 Export ML Report
+                    </button>
+                    <button class="control-btn secondary" onclick="window.print()">
+                        🖨️ Print Report
+                    </button>
+                </div>
             </div>
         </section>
     </main>

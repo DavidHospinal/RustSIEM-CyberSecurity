@@ -31,6 +31,42 @@ pub struct AlertsQuery {
     pub to: Option<DateTime<Utc>>,
 }
 
+#[derive(Debug, Deserialize)]
+pub struct FalsePositiveRequest {
+    pub event_id: String,
+    pub reason: Option<String>,
+    pub source_ip: String,
+    pub event_type: String,
+    pub raw_message: String,
+}
+
+#[derive(Debug, Serialize)]
+pub struct MLStatus {
+    pub models_trained: bool,
+    pub false_positive_classifier_active: bool,
+    pub anomaly_detector_active: bool,
+    pub similarity_matcher_active: bool,
+    pub last_training: Option<DateTime<Utc>>,
+    pub performance: ModelPerformance,
+    pub training_samples: usize,
+    pub total_predictions: u64,
+    pub false_positives_detected: u64,
+    pub true_positives: u64,
+    pub model_retrainings: u64,
+    pub avg_prediction_time_ms: f64,
+}
+
+#[derive(Debug, Serialize)]
+pub struct ModelPerformance {
+    pub accuracy: f64,
+    pub precision: f64,
+    pub recall: f64,
+    pub f1_score: f64,
+    pub false_positive_rate: f64,
+    pub training_samples: usize,
+    pub last_evaluation: Option<DateTime<Utc>>,
+}
+
 #[derive(Debug, Serialize)]
 pub struct ApiResponse<T> {
     pub success: bool,
@@ -417,6 +453,127 @@ impl DashboardRoutes {
                                 success: false,
                                 data: serde_json::json!({}),
                                 message: Some("Evento no encontrado o error interno".to_string()),
+                                timestamp: Utc::now(),
+                            }))
+                        }
+                    }
+                }
+            })
+    }
+
+    /// Ruta para obtener estado de ML
+    pub fn ml_status_route(&self) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
+        let detector = self.detector.clone();
+        
+        warp::path!("api" / "ml" / "status")
+            .and(warp::get())
+            .and_then(move || {
+                let detector = detector.clone();
+                async move {
+                    match detector.get_ml_status().await {
+                        Ok(ml_status) => Ok::<warp::reply::Json, warp::Rejection>(warp::reply::json(&ApiResponse {
+                            success: true,
+                            data: ml_status,
+                            message: None,
+                            timestamp: Utc::now(),
+                        })),
+                        Err(e) => {
+                            tracing::error!("Error obteniendo estado ML: {}", e);
+                            Ok::<warp::reply::Json, warp::Rejection>(warp::reply::json(&ApiResponse {
+                                success: false,
+                                data: serde_json::json!({}),
+                                message: Some("Error obteniendo estado ML".to_string()),
+                                timestamp: Utc::now(),
+                            }))
+                        }
+                    }
+                }
+            })
+    }
+
+    /// Ruta para marcar evento como falso positivo
+    pub fn mark_false_positive_route(&self) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
+        let detector = self.detector.clone();
+        
+        warp::path!("api" / "ml" / "false-positive")
+            .and(warp::post())
+            .and(warp::body::json())
+            .and_then(move |fp_request: FalsePositiveRequest| {
+                let detector = detector.clone();
+                async move {
+                    match detector.mark_event_as_false_positive(fp_request).await {
+                        Ok(result) => Ok::<warp::reply::Json, warp::Rejection>(warp::reply::json(&ApiResponse {
+                            success: true,
+                            data: result,
+                            message: Some("Event marked as false positive successfully".to_string()),
+                            timestamp: Utc::now(),
+                        })),
+                        Err(e) => {
+                            tracing::error!("Error marcando falso positivo: {}", e);
+                            Ok::<warp::reply::Json, warp::Rejection>(warp::reply::json(&ApiResponse {
+                                success: false,
+                                data: serde_json::json!({}),
+                                message: Some(format!("Error: {}", e)),
+                                timestamp: Utc::now(),
+                            }))
+                        }
+                    }
+                }
+            })
+    }
+
+    /// Ruta para entrenar modelos ML
+    pub fn train_ml_models_route(&self) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
+        let detector = self.detector.clone();
+        
+        warp::path!("api" / "ml" / "train")
+            .and(warp::post())
+            .and_then(move || {
+                let detector = detector.clone();
+                async move {
+                    match detector.retrain_ml_models().await {
+                        Ok(result) => Ok::<warp::reply::Json, warp::Rejection>(warp::reply::json(&ApiResponse {
+                            success: true,
+                            data: result,
+                            message: Some("ML models retrained successfully".to_string()),
+                            timestamp: Utc::now(),
+                        })),
+                        Err(e) => {
+                            tracing::error!("Error entrenando modelos ML: {}", e);
+                            Ok::<warp::reply::Json, warp::Rejection>(warp::reply::json(&ApiResponse {
+                                success: false,
+                                data: serde_json::json!({}),
+                                message: Some(format!("Training failed: {}", e)),
+                                timestamp: Utc::now(),
+                            }))
+                        }
+                    }
+                }
+            })
+    }
+
+    /// Ruta para obtener patrones de falsos positivos
+    pub fn false_positive_patterns_route(&self) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
+        let detector = self.detector.clone();
+        
+        warp::path!("api" / "ml" / "false-positive-patterns")
+            .and(warp::get())
+            .and_then(move || {
+                let detector = detector.clone();
+                async move {
+                    match detector.get_false_positive_patterns().await {
+                        Ok(patterns) => Ok::<warp::reply::Json, warp::Rejection>(warp::reply::json(&ApiResponse {
+                            success: true,
+                            data: patterns,
+                            message: None,
+                            timestamp: Utc::now(),
+                        })),
+                        Err(e) => {
+                            tracing::error!("Error obteniendo patrones FP: {}", e);
+                            Ok::<warp::reply::Json, warp::Rejection>(warp::reply::json(&ApiResponse {
+                                success: false,
+                                data: serde_json::json!({}),
+                                message: Some("Error obteniendo patrones".to_string()),
                                 timestamp: Utc::now(),
                             }))
                         }

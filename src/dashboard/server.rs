@@ -1,4 +1,5 @@
 use crate::{storage::StorageManager, detector::DetectorEngine, Severity};
+use super::{routes::DashboardRoutes, reports::ReportsModule};
 use anyhow::Result;
 use std::sync::Arc;
 use warp::Filter;
@@ -294,6 +295,20 @@ impl DashboardServer {
                 })
             });
 
+        // Crear instancias para las nuevas funcionalidades
+        let dashboard_routes = DashboardRoutes::new(self.storage.clone(), self.detector.clone());
+        let reports_module = ReportsModule::new(self.storage.clone(), self.detector.clone());
+        
+        // Rutas ML
+        let ml_status = dashboard_routes.ml_status_route();
+        let mark_false_positive = dashboard_routes.mark_false_positive_route();
+        let train_ml_models = dashboard_routes.train_ml_models_route();
+        let false_positive_patterns = dashboard_routes.false_positive_patterns_route();
+        
+        // Rutas de reportes
+        let reports_data = reports_module.reports_data_route();
+        let ml_metrics = reports_module.ml_metrics_route();
+
         // CORS headers para desarrollo
         let cors = warp::cors()
             .allow_any_origin()
@@ -312,6 +327,14 @@ impl DashboardServer {
             .or(events)
             .or(alerts)
             .or(ws_events)
+            // Nuevas rutas ML
+            .or(ml_status)
+            .or(mark_false_positive)
+            .or(train_ml_models)
+            .or(false_positive_patterns)
+            // Nuevas rutas de reportes
+            .or(reports_data)
+            .or(ml_metrics)
             .with(cors)
             .with(warp::log("rustsiem"));
 
@@ -326,6 +349,14 @@ impl DashboardServer {
         tracing::info!("   GET /api/events/<id> - Detalles de evento");
         tracing::info!("   GET /api/alerts - Alertas activas");
         tracing::info!("   WS /ws/events - Stream de eventos en tiempo real");
+        tracing::info!("🤖 API endpoints ML disponibles:");
+        tracing::info!("   GET /api/ml/status - Estado del ML");
+        tracing::info!("   POST /api/ml/false-positive - Marcar evento como falso positivo");
+        tracing::info!("   POST /api/ml/train - Reentrenar modelos ML");
+        tracing::info!("   GET /api/ml/false-positive-patterns - Patrones de falsos positivos");
+        tracing::info!("📊 API endpoints de reportes disponibles:");
+        tracing::info!("   GET /api/reports/data - Datos completos de reportes");
+        tracing::info!("   GET /api/reports/ml-metrics - Métricas específicas de ML");
 
         // Iniciar servidor
         let server = warp::serve(routes)
@@ -904,7 +935,7 @@ impl DashboardServer {
     }
 
     /// Genera guías de mitigación específicas para cada tipo de evento
-    fn get_mitigation_guidance_for_event_type(event_type: &str, severity: &str) -> serde_json::Value {
+    fn get_mitigation_guidance_for_event_type(event_type: &str, _severity: &str) -> serde_json::Value {
         match event_type {
             "HTTP Request" => serde_json::json!({
                 "immediate_actions": [

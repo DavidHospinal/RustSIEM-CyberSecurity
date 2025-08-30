@@ -4098,18 +4098,10 @@ function renderEducationalTab(eventData) {
                 <div class="education-section mitre-section">
                     <h3>Mapeo MITRE ATT&CK</h3>
                     <div class="mitre-mapping">
-                        <div class="mitre-tactics">
-                            <h4>Tácticas</h4>
-                            <div class="mitre-items">
-                                ${eventData.educational_context.mitre_tactics.map(tactic => `
-                                    <span class="mitre-tag tactic">${tactic}</span>
-                                `).join('')}
-                            </div>
-                        </div>
                         <div class="mitre-techniques">
-                            <h4>Técnicas</h4>
+                            <h4>Técnicas MITRE ATT&CK</h4>
                             <div class="mitre-items">
-                                ${eventData.educational_context.mitre_techniques.map(technique => `
+                                ${(eventData.threat_intelligence?.mitre_techniques || []).map(technique => `
                                     <span class="mitre-tag technique">${technique}</span>
                                 `).join('')}
                             </div>

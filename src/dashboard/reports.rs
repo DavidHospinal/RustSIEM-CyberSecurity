@@ -1,4 +1,6 @@
-use crate::{storage::StorageManager, detector::DetectorEngine, Severity, LogEvent, EventType};
+use crate::{Severity, LogEvent, EventType};
+use crate::storage::manager::StorageManager;
+use crate::detector::engine::DetectorEngine;
 use chrono::Timelike;
 use anyhow::Result;
 use std::sync::Arc;

@@ -2,7 +2,8 @@ use std::collections::HashMap;
 use chrono::{DateTime, Utc, Duration, Timelike};
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
-use crate::{LogEvent, Severity, storage::StorageManager};
+use crate::{LogEvent, Severity};
+use crate::storage::manager::StorageManager;
 use anyhow::Result;
 
 /// Motor de búsqueda proactiva de amenazas (Threat Hunting)

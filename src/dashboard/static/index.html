@@ -14,20 +14,40 @@
     <header class="header">
         <div class="header-content">
             <div class="logo-section">
-                <h1 class="main-title">
-                    <span class="logo">🛡️</span>
-                    RustSIEM
-                    <span class="subtitle">Security Information & Event Management</span>
-                </h1>
+                <div class="main-logo-container">
+                    <img src="/static/hospinal-logo.png" alt="Hospinal Logo" class="author-logo">
+                    <h1 class="main-title">
+                        <span class="logo">🛡️</span>
+                        RustSIEM
+                        <span class="subtitle">Security Information & Event Management</span>
+                    </h1>
+                </div>
+                <div class="author-info">
+                    <div class="author-name">Oscar David Hospinal R.</div>
+                    <div class="author-title">Master's Degree in Information Technology and Management</div>
+                    <div class="author-role">Creator & Developer</div>
+                </div>
             </div>
             <div class="header-info">
-                <div class="last-updated">
-                    <span>Last Updated:</span>
-                    <span id="last-updated-time">--</span>
+                <div class="header-actions">
+                    <button class="control-btn license-btn" onclick="showLicenseModal()" title="Ver información de licencia">
+                        <span class="btn-icon">📄</span>
+                        Licencia
+                    </button>
+                    <button class="control-btn contact-btn" onclick="showAuthorModal()" title="Información del autor">
+                        <span class="btn-icon">👨‍💻</span>
+                        Autor
+                    </button>
                 </div>
-                <div class="critical-alerts-badge">
-                    <span id="critical-alerts-count">0</span>
-                    <span>Critical Alerts</span>
+                <div class="system-info">
+                    <div class="last-updated">
+                        <span>Last Updated:</span>
+                        <span id="last-updated-time">--</span>
+                    </div>
+                    <div class="critical-alerts-badge">
+                        <span id="critical-alerts-count">0</span>
+                        <span>Critical Alerts</span>
+                    </div>
                 </div>
             </div>
         </div>

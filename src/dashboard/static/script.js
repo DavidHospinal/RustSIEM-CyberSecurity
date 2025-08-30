@@ -2910,6 +2910,236 @@ class RustSIEMDashboard {
     }
 }
 
+/**
+ * Muestra el modal del autor
+ */
+function showAuthorModal() {
+    const modalHtml = `
+        <div class="modal-overlay" id="author-modal">
+            <div class="modal-container">
+                <div class="modal-header">
+                    <h2>👨‍💻 Información del Autor</h2>
+                    <button class="modal-close-btn" onclick="closeAuthorModal()">✕</button>
+                </div>
+                <div class="modal-content">
+                    <div class="author-profile">
+                        <img src="/static/hospinal-logo.png" alt="Oscar David Hospinal R." class="profile-image">
+                        <div class="author-details">
+                            <h3>Oscar David Hospinal R.</h3>
+                            <p class="author-degree">Master's Degree in Information Technology and Management</p>
+                            <p class="author-position">Creator & Lead Developer</p>
+                            
+                            <div class="contact-info">
+                                <h4>📧 Información de Contacto</h4>
+                                <div class="contact-links">
+                                    <a href="mailto:oscardavid.hospinal@uc.cl" class="contact-link email">
+                                        <span>📧</span> oscardavid.hospinal@uc.cl
+                                    </a>
+                                    <a href="https://www.linkedin.com/in/oscardavidhospinal/" target="_blank" class="contact-link linkedin">
+                                        <span>💼</span> LinkedIn
+                                    </a>
+                                    <a href="https://github.com/DavidHospinal" target="_blank" class="contact-link github">
+                                        <span>🔗</span> GitHub
+                                    </a>
+                                </div>
+                            </div>
+                            
+                            <div class="project-info">
+                                <h4>🎯 Sobre RustSIEM</h4>
+                                <p>RustSIEM es una plataforma de Security Information & Event Management desarrollada en Rust, diseñada para proporcionar detección avanzada de amenazas, análisis de comportamiento con machine learning y gestión integral de eventos de seguridad.</p>
+                                
+                                <div class="features-list">
+                                    <h5>Características Principales:</h5>
+                                    <ul>
+                                        <li>🔐 Detección de SQL Injection y XSS</li>
+                                        <li>🧠 Análisis ML de Anomalías</li>
+                                        <li>🎯 Threat Hunting Avanzado</li>
+                                        <li>📊 Dashboard de Análisis en Tiempo Real</li>
+                                        <li>🌐 Análisis Geográfico de Amenazas</li>
+                                        <li>📑 Reportes Educativos Detallados</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn-primary" onclick="closeAuthorModal()">Cerrar</button>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    document.body.insertAdjacentHTML('beforeend', modalHtml);
+    requestAnimationFrame(() => {
+        document.getElementById('author-modal').classList.add('show');
+    });
+}
+
+/**
+ * Cierra el modal del autor
+ */
+function closeAuthorModal() {
+    const modal = document.getElementById('author-modal');
+    if (modal) {
+        modal.classList.remove('show');
+        setTimeout(() => modal.remove(), 300);
+    }
+}
+
+/**
+ * Muestra el modal de la licencia MIT
+ */
+function showLicenseModal() {
+    const currentYear = new Date().getFullYear();
+    const modalHtml = `
+        <div class="modal-overlay" id="license-modal">
+            <div class="modal-container large">
+                <div class="modal-header">
+                    <h2>📄 Licencia MIT</h2>
+                    <button class="modal-close-btn" onclick="closeLicenseModal()">✕</button>
+                </div>
+                <div class="modal-content license-content">
+                    <div class="license-info">
+                        <h3>Derechos de autor (c) ${currentYear} RustSIEM-CyberSecurity</h3>
+                        
+                        <div class="license-text">
+                            <p>Se concede permiso por la presente, sin cargo alguno, a cualquier persona que obtenga una copia de este software y los archivos de documentación asociados (el "Software"), para tratar en el Software sin restricciones, incluidos, entre otros, los derechos usar, copiar, modificar, fusionar, publicar, distribuir, sublicenciar y/o vender copias del Software y permitir que las personas a quienes se dirige el Software equipado para ello, sujeto a las siguientes condiciones:</p>
+                            
+                            <p>El aviso de derechos de autor anterior y este aviso de permiso se incluirán en todos copias o partes sustanciales del Software.</p>
+                            
+                            <div class="warranty-disclaimer">
+                                <strong>EL SOFTWARE SE PROPORCIONA "TAL CUAL", SIN GARANTÍA DE NINGÚN TIPO, EXPRESA O IMPLÍCITAS, INCLUYENDO, ENTRE OTRAS, LAS GARANTÍAS DE COMERCIABILIDAD, IDONEIDAD PARA UN PROPÓSITO PARTICULAR Y NO INFRACCIÓN. EN NINGÚN CASO EL LOS AUTORES O TITULARES DE LOS DERECHOS DE AUTOR NO SERÁN RESPONSABLES DE CUALQUIER RECLAMACIÓN, DAÑO U OTROS RESPONSABILIDAD, YA SEA EN UNA ACCIÓN CONTRACTUAL, EXTRACONTRACTUAL O DE OTRO MODO, QUE SURJA DE, FUERA DE O EN CONEXIÓN CON EL SOFTWARE O EL USO U OTRAS OPERACIONES EN EL SOFTWARE.</strong>
+                            </div>
+                        </div>
+                        
+                        <div class="project-details">
+                            <h4>🎯 Sobre el Proyecto</h4>
+                            <p>RustSIEM-CyberSecurity es una plataforma de Security Information & Event Management diseñada para proporcionar análisis avanzado de amenazas de ciberseguridad y detección de anomalías con machine learning.</p>
+                            
+                            <div class="tech-features">
+                                <h5>Características Principales:</h5>
+                                <div class="features-grid">
+                                    <div class="feature-item">🔐 Detección Avanzada de Amenazas</div>
+                                    <div class="feature-item">🧠 Machine Learning & IA</div>
+                                    <div class="feature-item">🎯 Threat Hunting</div>
+                                    <div class="feature-item">📊 Dashboard en Tiempo Real</div>
+                                    <div class="feature-item">🌍 Análisis Geográfico</div>
+                                    <div class="feature-item">📚 Contenido Educativo</div>
+                                </div>
+                            </div>
+                            
+                            <div class="technologies">
+                                <h5>Tecnologías Utilizadas:</h5>
+                                <div class="tech-stack">
+                                    <span class="tech-badge">Rust</span>
+                                    <span class="tech-badge">Warp Framework</span>
+                                    <span class="tech-badge">JavaScript</span>
+                                    <span class="tech-badge">HTML5/CSS3</span>
+                                    <span class="tech-badge">Machine Learning</span>
+                                    <span class="tech-badge">Cybersecurity</span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="author-contact">
+                            <h4>👨‍💻 Desarrollado por:</h4>
+                            <p><strong>Oscar David Hospinal R.</strong></p>
+                            <p>Master's Degree in Information Technology and Management</p>
+                            <div class="contact-links">
+                                <a href="mailto:oscardavid.hospinal@uc.cl">📧 oscardavid.hospinal@uc.cl</a>
+                                <a href="https://www.linkedin.com/in/oscardavidhospinal/" target="_blank">💼 LinkedIn</a>
+                                <a href="https://github.com/DavidHospinal" target="_blank">🔗 GitHub</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn-secondary" onclick="copyLicenseText()">📋 Copiar Licencia</button>
+                    <button class="btn-primary" onclick="closeLicenseModal()">Cerrar</button>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    document.body.insertAdjacentHTML('beforeend', modalHtml);
+    requestAnimationFrame(() => {
+        document.getElementById('license-modal').classList.add('show');
+    });
+}
+
+/**
+ * Cierra el modal de la licencia
+ */
+function closeLicenseModal() {
+    const modal = document.getElementById('license-modal');
+    if (modal) {
+        modal.classList.remove('show');
+        setTimeout(() => modal.remove(), 300);
+    }
+}
+
+/**
+ * Copia el texto de la licencia al clipboard
+ */
+async function copyLicenseText() {
+    const licenseText = `MIT License
+
+Copyright (c) ${new Date().getFullYear()} RustSIEM-CyberSecurity
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+
+---
+Developed by: Oscar David Hospinal R.
+Contact: oscardavid.hospinal@uc.cl
+GitHub: https://github.com/DavidHospinal
+LinkedIn: https://www.linkedin.com/in/oscardavidhospinal/`;
+
+    try {
+        await navigator.clipboard.writeText(licenseText);
+        showNotification('✅ Licencia copiada al portapapeles', 'success');
+    } catch (err) {
+        console.error('Error copiando licencia:', err);
+        showNotification('❌ Error al copiar la licencia', 'error');
+    }
+}
+
+/**
+ * Muestra una notificación temporal
+ */
+function showNotification(message, type = 'info') {
+    const notification = document.createElement('div');
+    notification.className = `notification ${type}`;
+    notification.textContent = message;
+    
+    document.body.appendChild(notification);
+    
+    requestAnimationFrame(() => {
+        notification.classList.add('show');
+    });
+    
+    setTimeout(() => {
+        notification.classList.remove('show');
+        setTimeout(() => notification.remove(), 300);
+    }, 3000);
+}
+
 // Inicializar dashboard cuando el DOM esté listo
 let dashboard;
 
@@ -2991,30 +3221,687 @@ document.head.appendChild(style);
  */
 async function showEventEducationalDetails(eventId) {
     console.log(`🔍 Cargando detalles educativos para evento: ${eventId}`);
-    console.log(`🌐 URL: ${window.location.origin}/api/events/${eventId}/educational`);
+    
+    // Buscar el evento en el cache
+    const event = dashboard.cachedEvents.find(e => e.id === eventId);
+    
+    if (!event) {
+        console.error(`❌ Evento no encontrado: ${eventId}`);
+        showErrorModal('No se encontró el evento especificado');
+        return;
+    }
+
+    console.log(`✅ Evento encontrado:`, event);
 
     try {
         showLoadingModal();
 
-        const response = await fetch(`${window.location.origin}/api/events/${eventId}/educational`);
-        console.log(`📡 Response status: ${response.status}`);
-        
-        const result = await response.json();
-        console.log(`📦 Response data:`, result);
+        // Generar datos educativos basados en el evento
+        const educationalData = generateEventEducationalData(event);
+        console.log(`📚 Datos educativos generados:`, educationalData);
 
-        if (result.success && result.data) {
-            console.log(`✅ Rendering modal con data:`, result.data);
-            renderEducationalModal(result.data);
-        } else {
-            console.error(`❌ API Error: success=${result.success}, data=${result.data}`);
-            showErrorModal('No se pudieron cargar los detalles educativos del evento');
-        }
+        renderEducationalModal(educationalData);
     } catch (error) {
-        console.error('❌ Error cargando detalles educativos:', error);
-        showErrorModal('Error de conexión al cargar detalles del evento');
+        console.error('❌ Error generando detalles educativos:', error);
+        showErrorModal('Error al generar los detalles educativos del evento');
     } finally {
         hideLoadingModal();
     }
+}
+
+/**
+ * Genera datos educativos completos basados en el evento
+ */
+function generateEventEducationalData(event) {
+    console.log(`🎓 Generando datos educativos para evento tipo: ${event.event_type}`);
+    
+    // Datos base del evento
+    const baseEventData = {
+        event: {
+            id: event.id,
+            timestamp: event.timestamp,
+            severity: event.severity,
+            source: event.source,
+            event_type: event.event_type,
+            description: event.description,
+            source_ip: event.source_ip,
+            raw_message: generateRawMessage(event)
+        }
+    };
+
+    // Generar datos específicos por tipo de evento
+    const typeSpecificData = generateTypeSpecificEducationalData(event.event_type, event);
+    
+    return {
+        ...baseEventData,
+        ...typeSpecificData
+    };
+}
+
+/**
+ * Genera mensaje raw simulado basado en el evento
+ */
+function generateRawMessage(event) {
+    const rawMessages = {
+        'SQL Injection': `${event.source_ip} - - [${new Date(event.timestamp).toLocaleString()}] "POST /login.php HTTP/1.1" 200 1234 "Mozilla/5.0" "' UNION SELECT username,password FROM users--"`,
+        'XSS Attempt': `${event.source_ip} - - [${new Date(event.timestamp).toLocaleString()}] "GET /search.php?q=<script>alert('XSS')</script> HTTP/1.1" 403 567`,
+        'Brute Force': `${event.source_ip} - - [${new Date(event.timestamp).toLocaleString()}] SSH-2.0-OpenSSH_7.4: Failed password for admin from ${event.source_ip} port 47832 ssh2`,
+        'HTTP Request': `${event.source_ip} - - [${new Date(event.timestamp).toLocaleString()}] "GET /api/users HTTP/1.1" 200 2345 "Mozilla/5.0"`,
+        'SSH Login': `${event.source_ip} - - [${new Date(event.timestamp).toLocaleString()}] SSH-2.0-OpenSSH_8.3: Accepted password for user from ${event.source_ip}`,
+        'File Access': `${event.source_ip} - - [${new Date(event.timestamp).toLocaleString()}] File access: /var/log/sensitive.log by user ${event.source_ip}`,
+        'SQL Query': `${event.source_ip} - - [${new Date(event.timestamp).toLocaleString()}] MySQL Query: SELECT * FROM users WHERE id=1`,
+        'Network Connection': `${event.source_ip} - - [${new Date(event.timestamp).toLocaleString()}] TCP connection established from ${event.source_ip}:4444`
+    };
+    
+    return rawMessages[event.event_type] || `${event.source_ip} - - [${new Date(event.timestamp).toLocaleString()}] ${event.description}`;
+}
+
+/**
+ * Genera datos educativos específicos por tipo de evento
+ */
+function generateTypeSpecificEducationalData(eventType, event) {
+    const eventDataMap = {
+        'SQL Injection': {
+            educational_context: {
+                attack_name: "Inyección SQL",
+                attack_description: "La inyección SQL es una técnica de ataque donde código SQL malicioso es insertado en campos de entrada de aplicaciones web para manipular bases de datos. Los atacantes pueden extraer, modificar o eliminar datos sensibles.",
+                difficulty_level: "Intermedio",
+                learning_objectives: [
+                    "Comprender cómo funcionan las inyecciones SQL",
+                    "Identificar patrones comunes de ataques SQL",
+                    "Aprender técnicas de prevención y mitigación",
+                    "Reconocer payloads maliciosos en logs"
+                ],
+                attack_techniques: [
+                    "UNION-based SQL injection",
+                    "Boolean-based blind SQL injection", 
+                    "Time-based blind SQL injection",
+                    "Error-based SQL injection"
+                ],
+                key_concepts: [
+                    "Prepared Statements",
+                    "Input Validation",
+                    "Least Privilege",
+                    "WAF Protection"
+                ]
+            },
+            threat_intelligence: {
+                threat_level: "Alto",
+                origin_country: getCountryFromIP(event.source_ip),
+                attack_frequency: "Muy común - 40% de ataques web",
+                typical_targets: ["Formularios de login", "Campos de búsqueda", "URLs con parámetros", "APIs REST"],
+                known_groups: ["Script kiddies", "Grupos de cibercrime", "APT si es dirigido"],
+                mitre_techniques: ["T1190 - Exploit Public-Facing Application"]
+            },
+            technical_analysis: {
+                payload_analysis: "' UNION SELECT username,password FROM users--",
+                vulnerability_type: "CWE-89: SQL Injection",
+                affected_components: ["Base de datos", "Aplicación web", "Capa de acceso a datos"],
+                attack_vector: "POST request a /login.php",
+                detection_methods: ["Pattern matching", "Anomaly detection", "Input validation monitoring"]
+            },
+            mitigation_guidance: {
+                immediate_actions: [
+                    { priority: "Alta", action: "Bloquear IP origen", timeline: "Inmediato" },
+                    { priority: "Alta", action: "Revisar logs de BD para accesos exitosos", timeline: "15 minutos" },
+                    { priority: "Media", action: "Verificar integridad de datos sensibles", timeline: "30 minutos" }
+                ],
+                preventive_measures: [
+                    "Implementar prepared statements/parameterized queries",
+                    "Aplicar validación y sanitización de input",
+                    "Configurar WAF con reglas anti-SQL injection",
+                    "Usar principio de menor privilegio en BD",
+                    "Implementar monitoring continuo"
+                ],
+                long_term_solutions: [
+                    "Code review enfocado en seguridad",
+                    "Capacitación de desarrolladores",
+                    "Testing de penetración regular",
+                    "Implementar SAST/DAST en CI/CD"
+                ]
+            },
+            real_world_examples: [
+                {
+                    name: "Equifax Data Breach (2017)",
+                    description: "Inyección SQL en aplicación web expuso datos de 147 millones de personas",
+                    impact: "Pérdidas de $4 billones, dimisiones ejecutivas, regulaciones reforzadas",
+                    lessons: "Importancia de parchear vulnerabilidades conocidas y monitoring continuo"
+                },
+                {
+                    name: "TalkTalk Hack (2015)",
+                    description: "Ataque SQL injection básico comprometió datos de 4 millones de clientes",
+                    impact: "Multa de £400,000, pérdida de confianza del cliente",
+                    lessons: "Incluso técnicas básicas pueden tener impactos masivos si no hay protección"
+                }
+            ]
+        },
+        'XSS Attempt': {
+            educational_context: {
+                attack_name: "Cross-Site Scripting (XSS)",
+                attack_description: "XSS permite a atacantes inyectar scripts maliciosos en sitios web que son ejecutados en los navegadores de otros usuarios, pudiendo robar cookies, redirigir usuarios o ejecutar acciones no autorizadas.",
+                difficulty_level: "Básico a Intermedio",
+                learning_objectives: [
+                    "Distinguir entre XSS reflejado, almacenado y DOM-based",
+                    "Identificar vectores de ataque XSS comunes",
+                    "Comprender el impacto de XSS en usuarios",
+                    "Aprender técnicas de encoding y CSP"
+                ],
+                attack_techniques: [
+                    "Reflected XSS",
+                    "Stored XSS", 
+                    "DOM-based XSS",
+                    "XSS via file uploads"
+                ],
+                key_concepts: [
+                    "Content Security Policy",
+                    "Output Encoding",
+                    "Input Sanitization",
+                    "HTTPOnly Cookies"
+                ]
+            },
+            threat_intelligence: {
+                threat_level: "Medio-Alto",
+                origin_country: getCountryFromIP(event.source_ip),
+                attack_frequency: "Muy común - 25% de vulnerabilidades web",
+                typical_targets: ["Formularios de comentarios", "Campos de búsqueda", "URLs", "Headers HTTP"],
+                known_groups: ["Defacers", "Phishing groups", "APT para spear-phishing"],
+                mitre_techniques: ["T1190 - Exploit Public-Facing Application", "T1566 - Phishing"]
+            },
+            technical_analysis: {
+                payload_analysis: "<script>alert('XSS')</script>",
+                vulnerability_type: "CWE-79: Cross-site Scripting",
+                affected_components: ["Frontend", "Input validation", "Output encoding"],
+                attack_vector: "GET parameter en /search.php",
+                detection_methods: ["Signature-based detection", "Content analysis", "CSP violation reports"]
+            },
+            mitigation_guidance: {
+                immediate_actions: [
+                    { priority: "Media", action: "Verificar si el XSS se almacenó en BD", timeline: "15 minutos" },
+                    { priority: "Media", action: "Revisar logs para otros intentos XSS", timeline: "30 minutos" },
+                    { priority: "Baja", action: "Notificar a usuarios si es necesario", timeline: "60 minutos" }
+                ],
+                preventive_measures: [
+                    "Implementar Content Security Policy (CSP)",
+                    "Aplicar output encoding/escaping",
+                    "Validar y sanitizar todos los inputs",
+                    "Usar httpOnly flags en cookies",
+                    "Implementar CSRF tokens"
+                ],
+                long_term_solutions: [
+                    "Code review enfocado en XSS",
+                    "Usar frameworks que auto-escapan",
+                    "Testing automatizado anti-XSS",
+                    "Capacitación de desarrolladores"
+                ]
+            },
+            real_world_examples: [
+                {
+                    name: "MySpace Samy Worm (2005)",
+                    description: "XSS worm se propagó a 1 millón de perfiles en 20 horas",
+                    impact: "Sitio web caído, awareness masivo sobre XSS",
+                    lessons: "XSS puede propagarse automáticamente y causar impactos masivos"
+                },
+                {
+                    name: "Twitter XSS (2010)",
+                    description: "Stored XSS en tweets causó propagación viral de popup malicioso",
+                    impact: "Miles de cuentas comprometidas, sitio web parcialmente inaccesible",
+                    lessons: "Importancia de sanitizar contenido generado por usuarios"
+                }
+            ]
+        },
+        'Brute Force': {
+            educational_context: {
+                attack_name: "Ataque de Fuerza Bruta",
+                attack_description: "Método sistemático de intentar múltiples combinaciones de credenciales hasta encontrar las correctas. Común en SSH, RDP, servicios web y APIs.",
+                difficulty_level: "Básico",
+                learning_objectives: [
+                    "Reconocer patrones de ataques de fuerza bruta",
+                    "Comprender diferentes vectores de ataque",
+                    "Aprender técnicas de detección y prevención",
+                    "Evaluar la efectividad de políticas de contraseñas"
+                ],
+                attack_techniques: [
+                    "Dictionary attacks",
+                    "Credential stuffing", 
+                    "Password spraying",
+                    "Hybrid attacks"
+                ],
+                key_concepts: [
+                    "Rate Limiting",
+                    "Account Lockout",
+                    "Multi-Factor Auth",
+                    "Strong Passwords"
+                ]
+            },
+            threat_intelligence: {
+                threat_level: "Medio",
+                origin_country: getCountryFromIP(event.source_ip),
+                attack_frequency: "Extremadamente común - Millones diarios",
+                typical_targets: ["SSH (puerto 22)", "RDP (puerto 3389)", "Paneles web admin", "APIs"],
+                known_groups: ["Botnets", "Script kiddies", "APT para acceso inicial"],
+                mitre_techniques: ["T1110 - Brute Force", "T1078 - Valid Accounts"]
+            },
+            technical_analysis: {
+                payload_analysis: "Multiple failed login attempts",
+                vulnerability_type: "CWE-307: Improper Restriction of Excessive Authentication Attempts",
+                affected_components: ["Sistema de autenticación", "Servicios de red", "APIs"],
+                attack_vector: "SSH connection attempts",
+                detection_methods: ["Rate limiting", "Failed login monitoring", "Geographic analysis"]
+            },
+            mitigation_guidance: {
+                immediate_actions: [
+                    { priority: "Alta", action: "Bloquear IP origen temporalmente", timeline: "Inmediato" },
+                    { priority: "Media", action: "Revisar todos los intentos de login", timeline: "15 minutos" },
+                    { priority: "Media", action: "Verificar si algún intento fue exitoso", timeline: "30 minutos" }
+                ],
+                preventive_measures: [
+                    "Implementar rate limiting y account lockouts",
+                    "Usar autenticación multi-factor (MFA)",
+                    "Aplicar políticas de contraseñas fuertes",
+                    "Cambiar puertos por defecto (SSH, RDP)",
+                    "Implementar fail2ban o equivalente"
+                ],
+                long_term_solutions: [
+                    "Migrate to key-based authentication",
+                    "Implement IP whitelisting where possible",
+                    "Use VPN for administrative access",
+                    "Regular password audits and rotation"
+                ]
+            },
+            real_world_examples: [
+                {
+                    name: "Mirai Botnet (2016)",
+                    description: "Botnet usó ataques de fuerza bruta para comprometer dispositivos IoT",
+                    impact: "600,000 dispositivos comprometidos, DDoS masivos contra DNS providers",
+                    lessons: "Credenciales por defecto y débiles son vectores de ataque masivo"
+                },
+                {
+                    name: "RDP Attacks during COVID-19",
+                    description: "Incremento del 330% en ataques RDP durante trabajo remoto",
+                    impact: "Miles de sistemas comprometidos, ransomware deployments",
+                    lessons: "Los cambios organizacionales crean nuevas superficies de ataque"
+                }
+            ]
+        },
+        // Agregar casos por defecto para otros tipos
+        'HTTP Request': {
+            educational_context: {
+                attack_name: "Solicitud HTTP Sospechosa",
+                attack_description: "Actividad HTTP que presenta patrones anómalos o potencialmente maliciosos que requieren investigación adicional.",
+                difficulty_level: "Básico",
+                learning_objectives: [
+                    "Analizar patrones normales vs anómalos en HTTP",
+                    "Identificar herramientas de scanning automatizadas",
+                    "Comprender headers HTTP maliciosos",
+                    "Reconocer técnicas de evasión"
+                ],
+                attack_techniques: ["Web scanning", "Directory traversal", "HTTP smuggling", "Cache poisoning"],
+                key_concepts: [
+                    "HTTP Headers",
+                    "User-Agent Analysis",
+                    "Rate Limiting",
+                    "Behavioral Analysis"
+                ]
+            },
+            threat_intelligence: {
+                threat_level: "Bajo-Medio",
+                origin_country: getCountryFromIP(event.source_ip),
+                attack_frequency: "Muy común - Tráfico constante",
+                typical_targets: ["Aplicaciones web", "APIs", "Servidores web"],
+                known_groups: ["Automated scanners", "Security researchers", "APT reconnaissance"],
+                mitre_techniques: ["T1595 - Active Scanning"]
+            },
+            technical_analysis: {
+                payload_analysis: "Standard HTTP request with unusual patterns",
+                vulnerability_type: "Reconnaissance activity",
+                affected_components: ["Web server", "Application layer"],
+                attack_vector: "HTTP request",
+                detection_methods: ["Behavioral analysis", "Rate limiting", "User-agent analysis"]
+            },
+            mitigation_guidance: {
+                immediate_actions: [
+                    { priority: "Baja", action: "Monitor continued activity", timeline: "Ongoing" },
+                    { priority: "Baja", action: "Check for escalation patterns", timeline: "30 minutes" }
+                ],
+                preventive_measures: [
+                    "Implement rate limiting",
+                    "Configure proper logging",
+                    "Use Web Application Firewall",
+                    "Monitor user-agent strings"
+                ],
+                long_term_solutions: [
+                    "Implement comprehensive monitoring",
+                    "Regular security assessments",
+                    "Update security configurations"
+                ]
+            },
+            real_world_examples: [
+                {
+                    name: "Mass Web Scanning",
+                    description: "Automated tools constantly scan for vulnerabilities",
+                    impact: "Resource consumption, potential vulnerability discovery",
+                    lessons: "Constant vigilance needed for web-facing services"
+                }
+            ]
+        },
+        'Login Attempt': {
+            educational_context: {
+                attack_name: "Intento de Inicio de Sesión",
+                attack_description: "Actividad de autenticación que puede ser legítima o formar parte de un ataque de credenciales. Requiere análisis del contexto geográfico, temporal y de patrones.",
+                difficulty_level: "Básico",
+                learning_objectives: [
+                    "Distinguir intentos legítimos de maliciosos",
+                    "Analizar patrones geográficos y temporales",
+                    "Identificar técnicas de credential stuffing",
+                    "Comprender políticas de autenticación"
+                ],
+                attack_techniques: ["Password spraying", "Credential stuffing", "Dictionary attacks", "Social engineering"],
+                key_concepts: [
+                    "Geolocation Analysis",
+                    "Behavioral Patterns",
+                    "Failed Login Thresholds",
+                    "Session Management"
+                ]
+            },
+            threat_intelligence: {
+                threat_level: "Medio",
+                origin_country: getCountryFromIP(event.source_ip),
+                attack_frequency: "Muy común - Actividad constante",
+                typical_targets: ["Paneles de administración", "Aplicaciones web", "APIs", "Servicios cloud"],
+                known_groups: ["Automated bots", "Credential stuffing groups", "APT reconnaissance"],
+                mitre_techniques: ["T1110 - Brute Force", "T1078 - Valid Accounts"]
+            },
+            technical_analysis: {
+                payload_analysis: "Login attempt analysis",
+                vulnerability_type: "Authentication monitoring",
+                affected_components: ["Authentication system", "User management", "Session control"],
+                attack_vector: "Web login form",
+                detection_methods: ["Failed login monitoring", "Geographic analysis", "Time-based analysis"]
+            },
+            mitigation_guidance: {
+                immediate_actions: [
+                    { priority: "Media", action: "Verificar ubicación geográfica", timeline: "5 minutos" },
+                    { priority: "Baja", action: "Revisar historial del usuario", timeline: "15 minutos" }
+                ],
+                preventive_measures: [
+                    "Implementar autenticación multi-factor",
+                    "Configurar rate limiting por IP",
+                    "Usar CAPTCHA después de múltiples fallos",
+                    "Implementar bloqueo temporal de cuentas"
+                ],
+                long_term_solutions: [
+                    "Deploy behavioral authentication",
+                    "Implement adaptive authentication",
+                    "Use risk-based access controls"
+                ]
+            },
+            real_world_examples: [
+                {
+                    name: "Office 365 Credential Attacks",
+                    description: "Ataques masivos contra cuentas corporativas usando listas de credenciales filtradas",
+                    impact: "Millones de cuentas comprometidas, acceso a emails corporativos",
+                    lessons: "Importancia de MFA y monitoring de login patterns"
+                }
+            ]
+        },
+        'SSH Login': {
+            educational_context: {
+                attack_name: "Acceso SSH",
+                attack_description: "Conexión SSH que puede ser administrativa legítima o intento de acceso no autorizado. Los logs SSH son críticos para detectar intrusiones.",
+                difficulty_level: "Intermedio",
+                learning_objectives: [
+                    "Analizar logs SSH para detectar anomalías",
+                    "Comprender técnicas de hardening SSH",
+                    "Identificar intentos de lateral movement",
+                    "Evaluar políticas de acceso remoto"
+                ],
+                attack_techniques: ["Brute force SSH", "Key-based attacks", "SSH tunneling", "Port forwarding"],
+                key_concepts: [
+                    "Key-based Authentication",
+                    "SSH Hardening",
+                    "Port Security",
+                    "Bastion Hosts"
+                ]
+            },
+            threat_intelligence: {
+                threat_level: "Alto",
+                origin_country: getCountryFromIP(event.source_ip),
+                attack_frequency: "Muy común - Ataques automatizados diarios",
+                typical_targets: ["Servidores Linux", "IoT devices", "Cloud instances", "Network devices"],
+                known_groups: ["Mirai botnet", "APT groups", "Cryptocurrency miners"],
+                mitre_techniques: ["T1021.004 - Remote Services: SSH", "T1078 - Valid Accounts"]
+            },
+            technical_analysis: {
+                payload_analysis: "SSH connection attempt",
+                vulnerability_type: "Remote access monitoring",
+                affected_components: ["SSH daemon", "Operating system", "Network security"],
+                attack_vector: "SSH protocol (port 22)",
+                detection_methods: ["SSH log analysis", "Failed authentication monitoring", "Geographic filtering"]
+            },
+            mitigation_guidance: {
+                immediate_actions: [
+                    { priority: "Alta", action: "Verificar si el acceso fue exitoso", timeline: "Inmediato" },
+                    { priority: "Alta", action: "Revisar comandos ejecutados", timeline: "5 minutos" },
+                    { priority: "Media", action: "Verificar otros accesos desde la misma IP", timeline: "15 minutos" }
+                ],
+                preventive_measures: [
+                    "Usar autenticación basada en claves",
+                    "Cambiar puerto SSH por defecto",
+                    "Implementar fail2ban",
+                    "Restringir acceso por IP/VPN"
+                ],
+                long_term_solutions: [
+                    "Deploy SSH certificates",
+                    "Use bastion hosts for access",
+                    "Implement just-in-time access"
+                ]
+            },
+            real_world_examples: [
+                {
+                    name: "Mirai Botnet SSH Attacks",
+                    description: "Botnet que usaba ataques SSH para comprometer dispositivos IoT y servidores",
+                    impact: "Miles de dispositivos comprometidos, ataques DDoS masivos",
+                    lessons: "Cambiar credenciales por defecto y usar autenticación fuerte"
+                }
+            ]
+        },
+        'File Access': {
+            educational_context: {
+                attack_name: "Acceso a Archivos",
+                attack_description: "Acceso a archivos del sistema que puede indicar actividad legítima, lateral movement, o exfiltración de datos.",
+                difficulty_level: "Intermedio",
+                learning_objectives: [
+                    "Analizar patrones de acceso a archivos",
+                    "Identificar accesos anómalos a archivos sensibles",
+                    "Comprender técnicas de data loss prevention",
+                    "Evaluar controles de acceso"
+                ],
+                attack_techniques: ["Privilege escalation", "Data exfiltration", "Lateral movement", "Persistence"],
+                key_concepts: [
+                    "File Integrity Monitoring",
+                    "Access Control Lists",
+                    "Data Classification",
+                    "Audit Logging"
+                ]
+            },
+            threat_intelligence: {
+                threat_level: "Medio-Alto",
+                origin_country: getCountryFromIP(event.source_ip),
+                attack_frequency: "Variable - Depende del contexto",
+                typical_targets: ["Archivos de configuración", "Logs del sistema", "Bases de datos", "Documentos sensibles"],
+                known_groups: ["APT groups", "Insider threats", "Data thieves"],
+                mitre_techniques: ["T1005 - Data from Local System", "T1083 - File and Directory Discovery"]
+            },
+            technical_analysis: {
+                payload_analysis: "File access monitoring",
+                vulnerability_type: "Data access monitoring",
+                affected_components: ["File system", "Access controls", "Audit system"],
+                attack_vector: "Direct file access",
+                detection_methods: ["File integrity monitoring", "Access log analysis", "Behavioral analysis"]
+            },
+            mitigation_guidance: {
+                immediate_actions: [
+                    { priority: "Alta", action: "Identificar archivo accedido", timeline: "Inmediato" },
+                    { priority: "Alta", action: "Verificar sensibilidad del archivo", timeline: "5 minutos" },
+                    { priority: "Media", action: "Revisar otros accesos del usuario", timeline: "15 minutos" }
+                ],
+                preventive_measures: [
+                    "Implementar principio de menor privilegio",
+                    "Usar file integrity monitoring",
+                    "Clasificar datos por sensibilidad",
+                    "Implementar DLP controls"
+                ],
+                long_term_solutions: [
+                    "Deploy zero-trust file access",
+                    "Use data rights management",
+                    "Implement continuous monitoring"
+                ]
+            },
+            real_world_examples: [
+                {
+                    name: "Snowden Case",
+                    description: "Acceso masivo a archivos clasificados por parte de un insider",
+                    impact: "Revelación de programas de vigilancia gubernamental",
+                    lessons: "Importancia de monitoring de acceso y principio de menor privilegio"
+                }
+            ]
+        },
+        'SQL Query': {
+            educational_context: {
+                attack_name: "Consulta SQL",
+                attack_description: "Ejecución de consultas SQL que puede ser actividad normal de la aplicación o indicar intentos de inyección o acceso no autorizado a datos.",
+                difficulty_level: "Intermedio",
+                learning_objectives: [
+                    "Analizar consultas SQL para detectar anomalías",
+                    "Identificar patrones de inyección SQL",
+                    "Comprender técnicas de database security",
+                    "Evaluar controles de acceso a datos"
+                ],
+                attack_techniques: ["SQL injection", "Privilege escalation", "Data exfiltration", "Database enumeration"],
+                key_concepts: [
+                    "Query Analysis",
+                    "Database Auditing",
+                    "Prepared Statements",
+                    "Database Activity Monitoring"
+                ]
+            },
+            threat_intelligence: {
+                threat_level: "Medio",
+                origin_country: getCountryFromIP(event.source_ip),
+                attack_frequency: "Muy común - Actividad constante de aplicaciones",
+                typical_targets: ["Bases de datos", "Aplicaciones web", "APIs", "Data warehouses"],
+                known_groups: ["Web attackers", "APT groups", "Data thieves"],
+                mitre_techniques: ["T1190 - Exploit Public-Facing Application", "T1005 - Data from Local System"]
+            },
+            technical_analysis: {
+                payload_analysis: "SQL query analysis",
+                vulnerability_type: "Database security monitoring",
+                affected_components: ["Database server", "Application layer", "Data access layer"],
+                attack_vector: "SQL protocol",
+                detection_methods: ["Query pattern analysis", "Performance monitoring", "Access log review"]
+            },
+            mitigation_guidance: {
+                immediate_actions: [
+                    { priority: "Media", action: "Analizar la consulta ejecutada", timeline: "5 minutos" },
+                    { priority: "Media", action: "Verificar datos accedidos", timeline: "10 minutos" },
+                    { priority: "Baja", action: "Revisar patrones de consultas similares", timeline: "30 minutos" }
+                ],
+                preventive_measures: [
+                    "Usar prepared statements",
+                    "Implementar query validation",
+                    "Aplicar principio de menor privilegio en BD",
+                    "Monitorear performance de consultas"
+                ],
+                long_term_solutions: [
+                    "Deploy database activity monitoring",
+                    "Use query firewalls",
+                    "Implement data masking"
+                ]
+            },
+            real_world_examples: [
+                {
+                    name: "Target Data Breach SQL Injection",
+                    description: "Uso de inyección SQL para acceder a sistemas de punto de venta",
+                    impact: "40 millones de tarjetas de crédito comprometidas",
+                    lessons: "Importancia de security testing y database hardening"
+                }
+            ]
+        },
+        'Network Connection': {
+            educational_context: {
+                attack_name: "Conexión de Red",
+                attack_description: "Establecimiento de conexiones de red que puede indicar actividad normal, comunicación C2, lateral movement, o exfiltración de datos.",
+                difficulty_level: "Básico",
+                learning_objectives: [
+                    "Analizar patrones de conexiones de red",
+                    "Identificar comunicaciones sospechosas",
+                    "Comprender técnicas de network security monitoring",
+                    "Evaluar controles de red"
+                ],
+                attack_techniques: ["C2 communication", "Data exfiltration", "Lateral movement", "Network enumeration"],
+                key_concepts: [
+                    "Network Monitoring",
+                    "Traffic Analysis",
+                    "Firewall Rules",
+                    "Network Segmentation"
+                ]
+            },
+            threat_intelligence: {
+                threat_level: "Bajo-Medio",
+                origin_country: getCountryFromIP(event.source_ip),
+                attack_frequency: "Extremadamente común - Tráfico constante",
+                typical_targets: ["Servidores web", "APIs", "Servicios de red", "Infraestructura crítica"],
+                known_groups: ["APT groups", "Botnets", "Network scanners"],
+                mitre_techniques: ["T1071 - Application Layer Protocol", "T1090 - Proxy"]
+            },
+            technical_analysis: {
+                payload_analysis: "Network connection analysis",
+                vulnerability_type: "Network security monitoring",
+                affected_components: ["Network infrastructure", "Firewalls", "Network services"],
+                attack_vector: "TCP/UDP protocols",
+                detection_methods: ["Network flow analysis", "Port monitoring", "Geographic analysis"]
+            },
+            mitigation_guidance: {
+                immediate_actions: [
+                    { priority: "Baja", action: "Verificar destino de la conexión", timeline: "10 minutos" },
+                    { priority: "Baja", action: "Analizar patrones de tráfico", timeline: "20 minutos" }
+                ],
+                preventive_measures: [
+                    "Implementar network segmentation",
+                    "Configurar firewalls apropiadamente",
+                    "Monitorear tráfico anómalo",
+                    "Usar network intrusion detection"
+                ],
+                long_term_solutions: [
+                    "Deploy zero-trust networking",
+                    "Use network analytics",
+                    "Implement micro-segmentation"
+                ]
+            },
+            real_world_examples: [
+                {
+                    name: "APT1 C2 Communications",
+                    description: "Grupo APT usando conexiones de red para mantener comunicación con servidores C2",
+                    impact: "Acceso persistente a redes corporativas durante años",
+                    lessons: "Importancia de network monitoring y threat hunting"
+                }
+            ]
+        }
+    };
+
+    // Usar datos específicos si existen, sino usar datos genéricos
+    return eventDataMap[eventType] || eventDataMap['HTTP Request'];
+}
+
+/**
+ * Obtiene país basado en IP (simplificado)
+ */
+function getCountryFromIP(ip) {
+    if (ip.startsWith('1.') || ip.startsWith('27.') || ip.startsWith('223.')) return 'China';
+    if (ip.startsWith('46.') || ip.startsWith('95.')) return 'Russia';
+    if (ip.startsWith('175.45.176.')) return 'North Korea';
+    if (ip.startsWith('192.168.') || ip.startsWith('10.')) return 'Red Interna';
+    return 'Desconocido';
 }
 
 /**

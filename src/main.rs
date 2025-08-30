@@ -35,7 +35,10 @@ async fn main() -> Result<()> {
     ).await?;
 
     // Start web dashboard
-    let dashboard_port = 8080;
+    let dashboard_port = std::env::var("PORT")
+        .unwrap_or_else(|_| "3030".to_string())
+        .parse::<u16>()
+        .unwrap_or(3030);
     let _dashboard_server = initialize_dashboard(
         storage_manager.clone(),
         detector_engine.clone(),

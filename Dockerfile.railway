@@ -1,0 +1,55 @@
+# Dockerfile optimizado para Railway
+FROM rust:1.75-slim-bookworm AS builder
+
+# Instalar dependencias del sistema
+RUN apt-get update && apt-get install -y \
+    pkg-config \
+    libssl-dev \
+    build-essential \
+    && rm -rf /var/lib/apt/lists/*
+
+# Crear directorio de trabajo
+WORKDIR /app
+
+# Copiar archivos de configuración de Rust
+COPY Cargo.toml Cargo.lock ./
+
+# Crear estructura de directorios necesaria
+COPY src/ ./src/
+COPY config/ ./config/
+COPY rules/ ./rules/
+COPY logs/ ./logs/
+
+# Compilar la aplicación en modo release
+RUN cargo build --release
+
+# Imagen final más ligera
+FROM debian:bookworm-slim
+
+# Instalar dependencias de runtime
+RUN apt-get update && apt-get install -y \
+    ca-certificates \
+    libssl3 \
+    && rm -rf /var/lib/apt/lists/*
+
+# Crear usuario no-root
+RUN useradd -m -u 1001 rustuser
+
+WORKDIR /app
+
+# Copiar el ejecutable desde la imagen de construcción
+COPY --from=builder /app/target/release/rust_siem ./rust_siem
+COPY --from=builder /app/config/ ./config/
+COPY --from=builder /app/rules/ ./rules/
+COPY --from=builder /app/logs/ ./logs/
+
+# Cambiar propietario de archivos
+RUN chown -R rustuser:rustuser /app
+
+USER rustuser
+
+# Exponer puerto
+EXPOSE 3030
+
+# Comando de inicio
+CMD ["./rust_siem"]

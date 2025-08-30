@@ -1,0 +1,8 @@
+[phases.setup]
+nixPkgs = ['rustc', 'cargo', 'gcc', 'pkg-config', 'openssl']
+
+[phases.build]
+cmds = ['cargo build --release']
+
+[phases.start]
+cmd = 'cargo run --release'

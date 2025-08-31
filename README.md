@@ -258,9 +258,12 @@ Este proyecto está licenciado bajo la Licencia MIT - ver el archivo [LICENSE](L
 - Inspirado por **desafíos modernos de ciberseguridad** que requieren soluciones de alto rendimiento
 
 ---
+<img width="699" height="416" alt="hospinal-systems-logo" src="https://github.com/user-attachments/assets/f21f199b-fae2-4b6f-8ee6-eed389b2ddf1" />
+
 
 <div align="center">
 
 **🦀 Construyendo el futuro de la ciberseguridad con Rust - una instrucción memory-safe a la vez. 🦀**
 
 </div>
+

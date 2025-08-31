@@ -1,8 +1,8 @@
 [build]
-builder = "NIXPACKS"
+builder = "nixpacks"
 
 [deploy]
-startCommand = "cargo run --release"
-restartPolicyType = "ON_FAILURE"
+startCommand = "./target/release/rust_siem"
+restartPolicyType = "on_failure"
 restartPolicyMaxRetries = 10
 

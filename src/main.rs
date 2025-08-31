@@ -27,34 +27,50 @@ async fn main() -> Result<()> {
     info!("Starting RustSIEM - Security Information & Event Management");
 
     // Initialize system components
+    info!("Initializing storage manager...");
     let storage_manager = initialize_storage().await?;
+    info!("Storage manager initialized successfully");
+    
+    info!("Initializing alert manager...");
     let alert_manager = initialize_alert_manager().await?;
+    info!("Alert manager initialized successfully");
+    
+    info!("Initializing detection engine...");
     let detector_engine = initialize_detection_engine(
         storage_manager.clone(),
         alert_manager.clone()
     ).await?;
+    info!("Detection engine initialized successfully");
 
     // Start web dashboard
     let dashboard_port = std::env::var("PORT")
         .unwrap_or_else(|_| "3030".to_string())
         .parse::<u16>()
         .unwrap_or(3030);
+    info!("Dashboard will start on port: {}", dashboard_port);
+    
+    info!("Initializing web dashboard...");
     let _dashboard_server = initialize_dashboard(
         storage_manager.clone(),
         detector_engine.clone(),
         dashboard_port
     ).await?;
+    info!("Web dashboard initialized successfully");
 
     // Start background log processing
+    info!("Starting background log processing...");
     start_log_processing(
         storage_manager.clone(),
         detector_engine.clone(),
         alert_manager.clone(),
     ).await;
+    info!("Background log processing started successfully");
 
     // Display system status
     print_system_info(dashboard_port);
 
+    info!("RustSIEM is fully initialized and running. Waiting for shutdown signal...");
+    
     // Wait for shutdown signal
     wait_for_shutdown_signal().await;
 

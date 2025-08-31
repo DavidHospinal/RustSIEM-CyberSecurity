@@ -359,10 +359,12 @@ impl DashboardServer {
         tracing::info!("   GET /api/reports/ml-metrics - Métricas específicas de ML");
 
         // Iniciar servidor
+        tracing::info!("Starting web server on http://0.0.0.0:{}", self.port);
         let server = warp::serve(routes)
             .run(([0, 0, 0, 0], self.port));
 
         tokio::spawn(server);
+        tracing::info!("Web server successfully started and listening on port {}", self.port);
         Ok(())
     }
 }

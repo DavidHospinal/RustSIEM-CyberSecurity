@@ -1,0 +1,51 @@
+MIT License
+
+Copyright (c) 2025 RustSIEM Project - H'spinal Systems
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+
+---
+
+ADDITIONAL TERMS FOR CYBERSECURITY SOFTWARE:
+
+1. SECURITY DISCLAIMER: This software is provided for educational and 
+   legitimate cybersecurity purposes only. Users are responsible for 
+   ensuring compliance with all applicable laws and regulations.
+
+2. NO WARRANTY FOR SECURITY: While this software is designed with security 
+   best practices, no software is completely secure. Users assume all risks 
+   associated with deployment in production environments.
+
+3. VULNERABILITY DISCLOSURE: Security vulnerabilities should be reported 
+   responsibly to security@hospinalsystems.com before public disclosure.
+
+4. EXPORT RESTRICTIONS: This software may be subject to export control laws. 
+   Users are responsible for compliance with applicable export regulations.
+
+---
+
+ATTRIBUTION:
+
+RustSIEM - Security Information and Event Management System
+Developed with Rust and JetBrains RustRover IDE
+H'spinal Systems - Advanced Cybersecurity Solutions
+https://hospinalsystems.carrd.co/
+
+For professional support, consulting, or commercial licensing options,
+please contact: info@hospinalsystems.com

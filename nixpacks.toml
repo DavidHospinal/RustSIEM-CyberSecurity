@@ -5,4 +5,4 @@ nixPkgs = ['rustc', 'cargo', 'gcc', 'pkg-config', 'openssl']
 cmds = ['cargo build --release']
 
 [phases.start]
-cmd = './target/release/rust_siem'
+cmd = 'cargo run --release'

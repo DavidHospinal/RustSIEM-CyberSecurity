@@ -1,5 +1,8 @@
 # **🦀 RustSIEM - Sistema de Gestión de Información y Eventos de Seguridad**
 
+![Animation-AL002](https://github.com/user-attachments/assets/821c9a96-d47a-4ea7-8585-4733d1862d6a)
+
+
 <div align="center">
 
 **Plataforma SIEM Profesional Construida con Rust para Ciberseguridad Empresarial**
@@ -266,4 +269,5 @@ Este proyecto está licenciado bajo la Licencia MIT - ver el archivo [LICENSE](L
 **🦀 Construyendo el futuro de la ciberseguridad con Rust - una instrucción memory-safe a la vez. 🦀**
 
 </div>
+
 

@@ -310,6 +310,8 @@ Al contribuir a RustSIEM, aceptas que tus contribuciones serán licenciadas bajo
 **¡Gracias por contribuir a RustSIEM!**
 
 Juntos, estamos construyendo la próxima generación de herramientas de ciberseguridad memory-safe.
+<img width="699" height="416" alt="hospinal-systems-logo" src="https://github.com/user-attachments/assets/5002ef7b-d23e-4e90-8864-b2a6b9b1b117" />
+
 
 ---
 
